@@ -142,9 +142,67 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
--- Maximize, not true fullscreen: mode 1 fills the monitor minus reserved
--- space and stays below the top layer, so the AGS bar and dock keep drawing.
-hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
+-- SUPER+F snaps the window to the work area — full width, from under the bar
+-- down to the top of the dock — and a second press restores the old geometry.
+--
+-- A plain move+resize rather than fullscreen mode 1. Maximized windows render
+-- in the fullscreen pass above every floating window, so switching away left
+-- one covering whatever you switched to; the focus hook then had to clear that
+-- state, which is what made the size revert. A floating window at a chosen size
+-- simply stays where it is put.
+local snapped = {}
+
+local function work_area(monitor)
+    local r = monitor.reserved or {}
+    local left, top = r.left or 0, r.top or 0
+    local x = monitor.x + left
+    local y = monitor.y + top
+    local w = monitor.width - left - (r.right or 0)
+    local h = monitor.height - top - (r.bottom or 0)
+
+    -- The dock claims no exclusive zone, so it never shows up in `reserved`.
+    -- Read the layer directly and stop the window above it.
+    local ok, layers = pcall(hl.get_layers, { namespace = "dock" })
+    if ok and type(layers) == "table" then
+        for _, layer in ipairs(layers) do
+            if layer.monitor and layer.monitor.id == monitor.id
+                and layer.y > y and layer.y < y + h then
+                h = layer.y - y
+            end
+        end
+    end
+
+    return x, y, w, h
+end
+
+local function place(win, x, y, w, h)
+    local target = "address:" .. win.address
+    hl.dispatch(hl.dsp.window.resize({ x = w, y = h, window = target }))
+    hl.dispatch(hl.dsp.window.move({ x = x, y = y, window = target }))
+end
+
+hl.bind(mainMod .. " + F", function()
+    local win = hl.get_active_window()
+    if not win or not win.monitor then return end
+
+    -- Tiled windows are sized by the layout, so float first or the resize is
+    -- simply ignored.
+    if not win.floating then
+        hl.dispatch(hl.dsp.window.float({ action = "enable", window = "address:" .. win.address }))
+        win = hl.get_active_window()
+        if not win then return end
+    end
+
+    local previous = snapped[win.address]
+    if previous then
+        snapped[win.address] = nil
+        place(win, previous.x, previous.y, previous.w, previous.h)
+        return
+    end
+
+    snapped[win.address] = { x = win.at.x, y = win.at.y, w = win.size.x, h = win.size.y }
+    place(win, work_area(win.monitor))
+end)
 
 -- Alt+Tab window switching, drawn by the AGS "switcher" overlay. AGS owns the
 -- list and the selection; these binds only nudge it. Nothing is focused until
@@ -311,8 +369,10 @@ hl.on("window.active", function()
     -- focusing the fullscreen window itself doesn't cancel it.
     local ws = w.workspace
     if ws and w.fullscreen == 0 then
+        -- Only true fullscreen (mode 2). Clearing maximize here is what used
+        -- to revert a window's size the moment you switched away from it.
         local top = ws.fullscreen_window
-        if top and top.address ~= w.address then
+        if top and top.address ~= w.address and top.fullscreen == 2 then
             hl.dispatch(hl.dsp.window.fullscreen_state({
                 internal = 0,
                 client   = 0,
