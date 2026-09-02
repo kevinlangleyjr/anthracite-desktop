@@ -14,6 +14,7 @@ import AstalHyprland from "gi://AstalHyprland"
 import AstalNotifd from "gi://AstalNotifd"
 import { For, With, createBinding, onCleanup } from "ags"
 import { createPoll } from "ags/time"
+import SystemStats from "./SystemStats"
 
 const WORKSPACE_COUNT = 5
 
@@ -107,7 +108,10 @@ function Media() {
   const players = createBinding(mpris, "players")
 
   return (
-    <menubutton class="panel-button media">
+    <menubutton
+      class="panel-button media"
+      visible={players((ps) => ps.length > 0)}
+    >
       <box>
         <For each={players}>
           {(player) => {
@@ -306,6 +310,7 @@ export default function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
           <Media />
         </box>
         <box $type="end">
+          <SystemStats />
           <Tray />
           <SystemButton />
           <BatteryPill />

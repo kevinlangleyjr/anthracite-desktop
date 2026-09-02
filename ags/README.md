@@ -3,7 +3,8 @@
 A recreation of the layout from [Aylur's ags-pre-ts "Space" theme](https://github.com/Aylur/dotfiles/tree/ags-pre-ts)
 on the current, maintained stack (AGS v3 / Astal / GTK4), themed with the
 Slatewave palette. Components: top bar, app launcher, quick settings, power
-menu with confirmation, notification popups, volume OSD, and a bottom dock.
+menu with confirmation, notification popups, volume OSD, system stats, and a
+bottom dock.
 
 The Slatewave color tokens live in `style/_palette.scss`. The wallpaper
 (`assets/slatewave-space.png`, source SVG alongside) is a custom flat space
@@ -63,6 +64,8 @@ Since the shell draws its own bar, disable waybar's `exec-once` if present.
 - Dock pinned apps: `PINNED` in `widget/Dock.tsx`
 - Workspace count: `WORKSPACE_COUNT` in `widget/Bar.tsx`
 - Power actions: `ACTIONS` in `widget/PowerMenu.tsx`
+- Stats poll rates / process count: constants at the top of
+  `widget/SystemStats.tsx` (`POLL`, `PROC_POLL`, `DISK_POLL`, `TOP_PROCS`)
 - All colors: `style/_palette.scss`
 
 ## Troubleshooting (first boot)

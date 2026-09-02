@@ -1,0 +1,109 @@
+// System stats: bar pill (CPU / RAM / temp) and its detail popover.
+@use "./palette" as *;
+@use "./common" as *;
+
+window#bar .stats {
+  .nerd-icon {
+    font-size: 1.05em;
+  }
+
+  .cpu .nerd-icon {
+    color: $blue;
+  }
+
+  .ram .nerd-icon {
+    color: $magenta;
+  }
+
+  .temp .nerd-icon {
+    color: $orange;
+  }
+
+  // fixed width so the readouts don't shove the tray around as they change
+  .value {
+    min-width: 32px;
+    color: $fg-color;
+  }
+
+  .value.warm {
+    color: $yellow;
+  }
+
+  .value.high {
+    color: $red;
+  }
+}
+
+.stats-popover {
+  min-width: 300px;
+
+  .key {
+    color: $muted;
+    font-weight: bold;
+  }
+
+  .row .value {
+    color: $fg-color;
+    font-weight: bold;
+  }
+
+  .detail {
+    color: $subtle;
+    font-size: 0.9em;
+  }
+
+  levelbar.stat-bar trough {
+    @include widget;
+    min-height: 10px;
+    padding: 1px;
+
+    block.filled {
+      border-radius: max($radii - $border-width, 0);
+      background-image: $active-gradient;
+    }
+
+    // Adwaita paints the unfilled blocks light; let the trough show through
+    block.empty {
+      background-color: transparent;
+      border: none;
+    }
+  }
+
+  levelbar.stat-bar.swap trough block.filled {
+    background-image: linear-gradient(to right, $magenta, $magenta);
+  }
+
+  .cores levelbar.core-bar trough {
+    @include widget;
+    min-width: 8px;
+    border-radius: $radii * 0.5;
+    padding: 1px;
+
+    block.filled {
+      border-radius: max($radii * 0.5 - $border-width, 0);
+      background-image: linear-gradient(to top, $teal, $blue);
+    }
+
+    block.empty {
+      background-color: transparent;
+      border: none;
+    }
+  }
+
+  .procs {
+    .proc .name {
+      color: $fg-color;
+    }
+
+    .proc .proc-mem {
+      color: $muted;
+      min-width: 44px;
+    }
+
+    .proc .proc-cpu {
+      color: $accent;
+      font-weight: bold;
+      min-width: 44px;
+    }
+  }
+}
