@@ -51,6 +51,11 @@
     border: none;
   } @else {
     background-color: $widget-bg;
+    // Adwaita paints buttons with a light background-image gradient. The flat
+    // branch clears it; this one has to as well, or that gradient sits on top
+    // of $widget-bg and every un-toggled button reads as white. It only looked
+    // right in the active state because .active sets its own background-image.
+    background-image: none;
     box-shadow: inset 0 0 0 $border-width $border-color;
   }
 
