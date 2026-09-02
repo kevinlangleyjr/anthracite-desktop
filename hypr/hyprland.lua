@@ -189,6 +189,15 @@ hl.window_rule({
 })
 
 hl.window_rule({
+    name  = "float-file-dialogs",
+    match = { title = "^(Open File|Open Files|Save File|Save Files|File Upload|Select a File)" },
+    float = true,
+})
+
+-- Always-float pattern for specific apps, e.g.:
+-- hl.window_rule({ name = "float-pavucontrol", match = { class = "org.pulseaudio.pavucontrol" }, float = true })
+
+hl.window_rule({
     name  = "fix-xwayland-drags",
     match = {
         class      = "^$",
