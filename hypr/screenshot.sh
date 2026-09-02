@@ -40,4 +40,14 @@ esac
 wl-copy <"$file"
 
 # -i with the shot itself gives the popup a thumbnail of what was captured.
-notify-send -a screenshot -i "$file" "Screenshot saved" "${file/#"$HOME"/\~}"
+# --action implies --wait, so notify-send lives as long as the popup and prints
+# the invoked action; detach it so the bind returns immediately. "default" is
+# the freedesktop key for "the body of the notification was clicked".
+(
+	if [[ $(notify-send -a screenshot -i "$file" \
+		--action=default=Open \
+		"Screenshot saved" "${file/#"$HOME"/\~}") == default ]]; then
+		xdg-open "$file"
+	fi
+) >/dev/null 2>&1 &
+disown
