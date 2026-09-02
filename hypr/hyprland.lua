@@ -140,9 +140,27 @@ hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
 -- list and the selection; these binds only nudge it. Nothing is focused until
 -- Alt comes back up, so the list can't reorder underneath the walk — which is
 -- what made cycling over Hyprland's own window list ping-pong.
-hl.bind("ALT + Tab",         hl.dsp.exec_cmd("ags request 'switcher next'"))
-hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("ags request 'switcher prev'"))
-hl.bind("ALT + Alt_L",       hl.dsp.exec_cmd("ags request 'switcher commit'"), { release = true })
+local switching = false
+
+local function switcher(action)
+    hl.exec_cmd("ags request 'switcher " .. action .. "'")
+end
+
+hl.bind("ALT + Tab",         function() switching = true; switcher("next") end)
+hl.bind("ALT + SHIFT + Tab", function() switching = true; switcher("prev") end)
+
+-- Commit when Alt comes back up. Release *binds* never fire in 0.56 — a
+-- release bind on Alt_L logged nothing across a whole session of Alt+Tab
+-- presses, while the raw key events for those same presses came through
+-- fine — so watch the key stream instead. Keycodes are XKB (evdev + 8):
+-- 64 = Alt_L, 108 = Alt_R; state 0 is a release. The `switching` guard keeps
+-- this from spawning a request on every unrelated Alt release.
+hl.on("input.keyboard.key", function(keycode, _timestamp, state)
+    if switching and state == 0 and (keycode == 64 or keycode == 108) then
+        switching = false
+        switcher("commit")
+    end
+end)
 
 -- AGS shell windows (SUPER+M replaces the example's raw exit — the
 -- powermenu's Log Out does the same via confirmation)

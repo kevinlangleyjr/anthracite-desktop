@@ -6,10 +6,11 @@ import { Astal, Gtk, Gdk } from "ags/gtk4"
 import AstalApps from "gi://AstalApps"
 import AstalHyprland from "gi://AstalHyprland"
 
-// If Hyprland never reports the Alt release — the release bind is missing, or
-// a fullscreen client grabbed the key — the overlay would sit on screen for
-// good. Commit on our own after this long without a Tab press.
-const STUCK_COMMIT_MS = 4000
+// Safety net only: hyprland.lua watches the key stream and commits the moment
+// Alt comes back up, so this just stops the overlay sticking around if that
+// release is ever missed. Keep it comfortably longer than a pause spent
+// reading the list — the clock restarts on every Tab press.
+const STUCK_COMMIT_MS = 3000
 
 type Entry = { address: string; cls: string; title: string; icon: string }
 type View = { entries: Entry[]; index: number }
