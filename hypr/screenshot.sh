@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Screenshot helper for the Print Screen binds in hyprland.lua.
 #
-#   screenshot.sh screen   focused monitor
-#   screenshot.sh region   drag a selection (Esc cancels)
-#   screenshot.sh window   the active window
+#   screenshot.sh screen    focused monitor
+#   screenshot.sh region    drag a selection (Esc cancels)
+#   screenshot.sh window    the active window
+#   screenshot.sh annotate  drag a selection, then mark it up in satty
 #
 # Every shot is written to ~/Pictures/Screenshots and copied to the clipboard,
 # then announced through the AGS notification popup.
@@ -31,8 +32,21 @@ window)
 		jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
 	grim -g "$geometry" "$file"
 	;;
+annotate)
+	geometry=$(slurp) || exit 0
+	# satty owns the rest: it saves to $file on Ctrl+S and copies on Ctrl+C.
+	# Enter copies and exits, Escape throws the shot away — so there is nothing
+	# to save or notify about here, and we are done either way.
+	grim -g "$geometry" - | satty --filename - \
+		--output-filename "$file" \
+		--early-exit \
+		--actions-on-enter save-to-clipboard \
+		--copy-command wl-copy \
+		--initial-tool arrow
+	exit 0
+	;;
 *)
-	echo "usage: ${0##*/} [screen|region|window]" >&2
+	echo "usage: ${0##*/} [screen|region|window|annotate]" >&2
 	exit 2
 	;;
 esac

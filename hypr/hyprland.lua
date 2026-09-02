@@ -25,6 +25,10 @@ hl.on("hyprland.start", function()
     -- just answers on D-Bus. Without this, anything asking for privileges
     -- (mounting a disk in Nautilus, say) fails with no prompt at all.
     hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
+    -- Clipboard history. Two watchers: wl-paste only reports one MIME class per
+    -- --watch, so text and images each need their own.
+    hl.exec_cmd("wl-paste --type text --watch cliphist store")
+    hl.exec_cmd("wl-paste --type image --watch cliphist store")
 end)
 
 
@@ -220,6 +224,18 @@ local screenshot = (os.getenv("HOME") or "") .. "/.config/hypr/screenshot.sh"
 hl.bind("Print",         hl.dsp.exec_cmd(screenshot .. " screen"))
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd(screenshot .. " region"))
 hl.bind("ALT + Print",   hl.dsp.exec_cmd(screenshot .. " window"))
+hl.bind("CTRL + Print",  hl.dsp.exec_cmd(screenshot .. " annotate"))
+
+-- Clipboard history picker, colour picker, and screen recording. The two
+-- scripts live beside this config; hyprpicker needs no wrapper since -a copies
+-- and -n notifies on its own.
+local home = os.getenv("HOME") or ""
+
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(home .. "/.config/hypr/clipboard.sh"))
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a -n -f hex"))
+
+hl.bind(mainMod .. " + SHIFT + R",        hl.dsp.exec_cmd(home .. "/.config/hypr/record.sh screen"))
+hl.bind(mainMod .. " + CTRL + SHIFT + R", hl.dsp.exec_cmd(home .. "/.config/hypr/record.sh region"))
 
 -- Laptop multimedia keys (the AGS OSD reacts to these via wireplumber)
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
@@ -274,7 +290,27 @@ hl.window_rule({
 -- click — focusing one by keybind or follow_mouse leaves it buried.
 hl.on("window.active", function()
     local w = hl.get_active_window()
-    if w and w.floating then
+    if not w then return end
+
+    -- A maximized or fullscreen window renders above its neighbours, so
+    -- focusing something underneath it hands over the keyboard while leaving
+    -- the window buried. misc:on_focus_under_fullscreen already handles this,
+    -- but only for *tiled* windows — everything here floats, so drop the other
+    -- window out of fullscreen ourselves. Guarded on w.fullscreen == 0 so
+    -- focusing the fullscreen window itself doesn't cancel it.
+    local ws = w.workspace
+    if ws and w.fullscreen == 0 then
+        local top = ws.fullscreen_window
+        if top and top.address ~= w.address then
+            hl.dispatch(hl.dsp.window.fullscreen_state({
+                internal = 0,
+                client   = 0,
+                window   = "address:" .. top.address,
+            }))
+        end
+    end
+
+    if w.floating then
         hl.dispatch(hl.dsp.window.bring_to_top())
     end
 end)
