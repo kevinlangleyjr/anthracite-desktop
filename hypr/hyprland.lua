@@ -19,6 +19,12 @@ local menu        = "ags toggle launcher"
 hl.on("hyprland.start", function()
     hl.exec_cmd("ags run")
     hl.exec_cmd("hyprpaper")
+    -- Idle ladder + lock (see hypridle.conf / hyprlock.conf).
+    hl.exec_cmd("hypridle")
+    -- polkit's *agent* is what draws the authentication dialog; polkitd alone
+    -- just answers on D-Bus. Without this, anything asking for privileges
+    -- (mounting a disk in Nautilus, say) fails with no prompt at all.
+    hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
 end)
 
 
@@ -166,6 +172,7 @@ end)
 -- powermenu's Log Out does the same via confirmation)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("ags toggle quicksettings"))
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("ags toggle powermenu"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
