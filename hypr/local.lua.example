@@ -1,0 +1,21 @@
+-- Per-machine Hyprland settings. install.sh copies this to local.lua, which
+-- is gitignored — put anything host-specific here, not in hyprland.lua.
+-- Load it from the end of hyprland.lua with:  pcall(require, "local")
+-- Reference: https://wiki.hypr.land/Configuring/Basics/Monitors/
+
+-- Laptop panel (X1 Carbon Gen 10 1920x1200, no scaling):
+-- hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })
+
+-- External display example, positioned to the right:
+-- hl.monitor({ output = "DP-1", mode = "2560x1440@144", position = "1920x0", scale = 1 })
+
+-- Fallback for anything unlisted:
+hl.monitor({
+    output   = "",
+    mode     = "preferred",
+    position = "auto",
+    scale    = "auto",
+})
+
+-- Host-specific env, e.g.:
+-- hl.env("GDK_SCALE", "1")
