@@ -1,0 +1,173 @@
+// Port of widgets/bar.scss with the Space theme's choices baked in:
+// bar.style 'normal', flat_buttons false, no separators.
+@use "./palette" as *;
+@use "./common" as *;
+
+$bar-spacing: 5px;
+
+window#bar {
+  background: transparent;
+  color: $fg-color;
+
+  > box.panel {
+    background-color: $bg-color;
+    border-bottom: $border-width solid $border-color;
+  }
+
+  .panel-button {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+
+    > box,
+    > label,
+    > image {
+      @include button;
+      border-radius: $radii;
+      margin: $bar-spacing;
+      padding: $padding * 0.4 $padding * 0.8;
+      font-weight: bold;
+    }
+
+    &:hover > box,
+    &:hover > label,
+    &:hover > image {
+      @include button-hover;
+    }
+
+    &:active > box,
+    &.active > box {
+      @include button-active;
+
+      label,
+      image {
+        color: $accent-fg;
+      }
+    }
+  }
+
+  // menubutton variants of panel buttons (date, media) — style the inner button
+  menubutton.panel-button {
+    > button {
+      background: none;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+
+      > box {
+        @include button;
+        border-radius: $radii;
+        margin: $bar-spacing;
+        padding: $padding * 0.4 $padding * 0.8;
+        font-weight: bold;
+      }
+
+      &:hover > box {
+        @include button-hover;
+      }
+    }
+  }
+
+  .launcher label {
+    color: $accent;
+    font-size: 1.2em;
+  }
+
+  .powermenu image {
+    color: rgba($red, 0.7);
+  }
+
+  .powermenu:hover image {
+    color: rgba($red, 0.85);
+  }
+
+  .powermenu:active image {
+    color: $red;
+  }
+
+  .date .bell {
+    color: $yellow;
+  }
+
+  .media .player-icon {
+    color: $green;
+  }
+
+  .quicksettings image.bluetooth {
+    color: $blue;
+  }
+
+  .focused-client label {
+    color: rgba($fg-color, 0.9);
+  }
+
+  .workspaces button {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0 2px;
+
+    .indicator {
+      font-size: 0;
+      min-width: 8px;
+      min-height: 8px;
+      border-radius: $radii * 0.6;
+      box-shadow: inset 0 0 0 $border-width $border-color;
+      margin: 0 $padding * 0.5;
+      transition: $transition;
+      background-color: rgba($fg-color, 0.2);
+    }
+
+    &.occupied .indicator {
+      background-color: rgba($fg-color, 0.8);
+      min-width: 10px;
+      min-height: 10px;
+    }
+
+    &:hover .indicator {
+      background-color: rgba($fg-color, 0.5);
+    }
+
+    &.active .indicator,
+    &:active .indicator {
+      background-color: $accent;
+      background-image: $active-gradient;
+    }
+
+    &.active .indicator {
+      min-width: 24px;
+      min-height: 16px;
+    }
+  }
+
+  .battery-pill {
+    levelbar trough {
+      @include widget;
+      min-width: 36px;
+      min-height: 12px;
+      padding: 1px;
+
+      block.filled {
+        border-radius: max($radii - $border-width, 0);
+        background-image: $active-gradient;
+      }
+    }
+
+    &.low {
+      label {
+        color: $red;
+      }
+
+      levelbar trough block.filled {
+        background-image: linear-gradient(to right, $red, $red);
+      }
+    }
+  }
+
+  .tray-item > button > box {
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+}

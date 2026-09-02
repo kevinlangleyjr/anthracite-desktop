@@ -1,0 +1,42 @@
+// Port of widgets/dock.scss — floating bottom dock
+@use "./palette" as *;
+@use "./common" as *;
+
+window#dock {
+  background: transparent;
+
+  box.dock {
+    @include floating-widget;
+    border-radius: $radii + $spacing * 0.5;
+    padding: $spacing * 0.5;
+
+    button {
+      background: none;
+      border: none;
+      box-shadow: none;
+      border-radius: $radii;
+      transition: $transition;
+      padding: 2px;
+
+      image {
+        margin: $padding * 0.5;
+      }
+
+      &:hover {
+        background-color: $hover;
+      }
+
+      .indicator {
+        min-width: 8px;
+        min-height: 3px;
+        border-radius: $radii;
+        margin-bottom: 2px;
+        background-color: transparent;
+
+        &.running {
+          background-image: $active-gradient;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+// Port of widgets/notifications.scss
+@use "./palette" as *;
+@use "./common" as *;
+
+window#notifications {
+  background: transparent;
+
+  .notification {
+    > box {
+      @include floating-widget;
+      border-radius: $radii + $padding * 0.5;
+      min-width: 380px;
+    }
+
+    &.critical > box {
+      box-shadow: inset 0 0 0.5em 0 $red, 0 0 8px 0 $shadow;
+    }
+
+    .title {
+      color: $fg-color;
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+
+    .time {
+      color: rgba($fg-color, 0.7);
+    }
+
+    .description {
+      font-size: 0.95em;
+      color: rgba($fg-color, 0.8);
+    }
+
+    .icon {
+      border-radius: $radii * 0.8;
+      margin-right: $spacing;
+    }
+
+    .actions {
+      margin-top: $spacing;
+
+      button {
+        @include button;
+        border-radius: $radii * 0.8;
+        padding: $padding * 0.7;
+      }
+    }
+
+    button.close-button {
+      @include button($flat: true);
+      border-radius: $radii * 0.8;
+      min-width: 16px;
+      min-height: 16px;
+      padding: 2px;
+
+      &:hover {
+        background-color: rgba($red, 0.75);
+        color: $fg-color;
+      }
+    }
+  }
+}

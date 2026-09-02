@@ -1,0 +1,108 @@
+// Port of widgets/quicksettings.scss (header, sliders, toggles, media)
+@use "./palette" as *;
+@use "./common" as *;
+
+window#quicksettings {
+  background: transparent;
+
+  box.window-content {
+    @include floating-widget;
+    min-width: 380px;
+
+    .header {
+      .user {
+        font-weight: bold;
+        color: $fg-color;
+      }
+
+      .uptime {
+        color: $muted;
+      }
+
+      .battery {
+        @include button;
+        padding: $padding * 0.6 $padding;
+        font-weight: bold;
+
+        image {
+          margin-right: 4px;
+        }
+      }
+
+      button {
+        @include button;
+        padding: $padding * 0.6;
+        min-height: 20px;
+        min-width: 20px;
+      }
+
+      button.power image {
+        color: rgba($red, 0.8);
+      }
+
+      button.power:hover image {
+        color: $red;
+      }
+    }
+
+    .sliders-box {
+      @include widget;
+      padding: $padding;
+
+      button {
+        @include button($flat: true);
+        padding: $padding * 0.5;
+      }
+
+      scale {
+        @include slider;
+      }
+    }
+
+    .simple-toggle {
+      @include button;
+      padding: $padding $padding * 1.1;
+      font-weight: bold;
+
+      image {
+        margin-right: 6px;
+      }
+
+      label.state {
+        color: $muted;
+        font-weight: normal;
+      }
+
+      &.active label.state {
+        color: $accent-fg;
+      }
+    }
+
+    .media .player {
+      @include widget;
+      padding: $padding;
+
+      .cover {
+        border-radius: $radii * 0.8;
+        min-width: 64px;
+        min-height: 64px;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .title {
+        color: $fg-color;
+        font-weight: bold;
+      }
+
+      .artist {
+        color: $muted;
+      }
+
+      button {
+        @include button($flat: true);
+        padding: $padding * 0.5;
+      }
+    }
+  }
+}

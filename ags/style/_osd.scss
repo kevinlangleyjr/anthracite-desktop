@@ -1,0 +1,30 @@
+// Port of widgets/osd.scss — volume/brightness indicator
+@use "./palette" as *;
+@use "./common" as *;
+
+window#osd {
+  background: transparent;
+
+  box.osd {
+    @include floating-widget;
+    padding: $padding;
+    border-radius: $radii + $padding;
+
+    image {
+      color: $fg-color;
+      margin-right: $padding;
+    }
+
+    levelbar trough {
+      @include widget;
+      min-width: 260px;
+      min-height: 14px;
+      padding: 1px;
+
+      block.filled {
+        border-radius: max($radii - $border-width, 0);
+        background-image: $active-gradient;
+      }
+    }
+  }
+}

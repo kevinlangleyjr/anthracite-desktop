@@ -1,0 +1,85 @@
+// Port of widgets/powermenu.scss — big icon buttons + verification dialog
+@use "./palette" as *;
+@use "./common" as *;
+
+window#powermenu {
+  background: rgba(#0b0e13, 0.05);
+
+  box.window-content {
+    @include floating-widget;
+    padding: $popover-padding + $spacing * 1.5;
+    border-radius: $popover-radius + $padding;
+
+    button {
+      background: none;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+
+      image {
+        @include button;
+        border-radius: $popover-radius;
+        min-width: 70px;
+        min-height: 70px;
+        font-size: 3em;
+        color: rgba($fg-color, 0.9);
+      }
+
+      label {
+        color: rgba($fg-color, 0.9);
+        margin-top: $padding * 0.5;
+      }
+
+      &:hover image {
+        @include button-hover;
+      }
+
+      &:focus image {
+        @include button-focus;
+      }
+
+      &:active image {
+        @include button-active;
+      }
+
+      &:focus label,
+      &:active label {
+        color: $accent;
+      }
+    }
+  }
+}
+
+window#verification {
+  background: rgba(#0b0e13, 0.05);
+
+  box.window-content {
+    @include floating-widget;
+    min-width: 300px;
+
+    .title {
+      font-size: 1.6em;
+      color: $fg-color;
+    }
+
+    .desc {
+      color: rgba($fg-color, 0.8);
+      font-size: 1.1em;
+    }
+
+    .buttons {
+      margin-top: $padding;
+
+      button {
+        @include button;
+        font-size: 1.2em;
+        padding: $padding;
+        min-width: 100px;
+      }
+
+      button.confirm:hover {
+        background-color: rgba($red, 0.4);
+      }
+    }
+  }
+}

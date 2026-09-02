@@ -1,0 +1,50 @@
+// Slatewave Space — AGS v3 (GTK4) shell styled with the Slatewave palette,
+// recreating the layout of Aylur's ags-pre-ts "Space" theme.
+@use "./style/palette" as *;
+@use "./style/bar";
+@use "./style/launcher";
+@use "./style/quicksettings";
+@use "./style/powermenu";
+@use "./style/notifications";
+@use "./style/osd";
+@use "./style/dock";
+
+* {
+  font-size: 13px;
+}
+
+.nerd-icon {
+  font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", monospace;
+}
+
+// generic popovers (calendar, media, tray menus)
+popover > contents {
+  background-color: $bg-color;
+  color: $fg-color;
+  border: $border-width solid $popover-border-color;
+  border-radius: $popover-radius;
+  padding: $popover-padding;
+  box-shadow: 0 0 8px 0 $shadow;
+}
+
+popover calendar {
+  background: transparent;
+  color: $fg-color;
+
+  header {
+    color: $fg-color;
+  }
+
+  grid label.today {
+    background-color: $accent;
+    color: $accent-fg;
+    border-radius: 6px;
+  }
+}
+
+tooltip {
+  background-color: $bg-color;
+  color: $fg-color;
+  border: $border-width solid $popover-border-color;
+  border-radius: 8px;
+}

@@ -1,0 +1,44 @@
+// Slatewave palette — canonical values from slatewave-omp / delta-slatewave.
+// Geometry tokens carry over Aylur's "Space" theme (spacing 11, padding 10,
+// radii 12) so the layout reads the same; only the colors are Slatewave.
+
+// core
+$slate-deep: #1a1e26;
+$slate-bg: #2c313a;
+$surface: #3e4451;
+$fg-color: #e2e8f0;
+$muted: #94a3b8;
+$subtle: #64748b;
+$line: #475569;
+
+// named colors
+$red: #fb7185; // rose
+$green: #34d399; // emerald
+$yellow: #fbbf24; // amber
+$blue: #38bdf8; // sky
+$magenta: #b388ff;
+$teal: #5eead4;
+$orange: #fb923c;
+
+// accent
+$accent: $teal;
+$accent-fg: #193549;
+$active-gradient: linear-gradient(to right, #5eead4, #2dd4bf);
+
+// space-theme geometry
+$spacing: 11px;
+$padding: 10px;
+$radii: 12px;
+$border-width: 1px;
+$popover-padding: $padding * 1.6;
+$popover-radius: $radii + $padding;
+
+// derived surfaces (the v1 formulas, applied to Slatewave values)
+$bg-color: rgba(#232833, 0.8); // theme.bg — space used near-black at 70%
+$widget-bg: rgba($fg-color, 0.06);
+$hover: rgba($fg-color, 0.14);
+$hover-fg: #f1f5f9;
+$border-color: rgba($line, 0.55);
+$popover-border-color: rgba($line, 0.7);
+$shadow: rgba(#0b0e13, 0.6);
+$transition: 200ms;

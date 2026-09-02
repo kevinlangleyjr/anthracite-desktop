@@ -1,0 +1,67 @@
+// Port of widgets/applauncher.scss
+@use "./palette" as *;
+@use "./common" as *;
+
+window#launcher {
+  background: transparent;
+  color: $fg-color;
+
+  box#launcher-content {
+    @include floating-widget;
+    min-width: 500px;
+
+    entry {
+      @include button;
+      padding: $padding;
+      margin-bottom: $spacing;
+      caret-color: $accent;
+
+      selection {
+        background-color: rgba($accent, 0.4);
+      }
+    }
+
+    separator {
+      min-height: 1px;
+      background-color: $hover;
+      margin-bottom: $spacing * 0.5;
+    }
+
+    button.app-item {
+      @include button($flat: true);
+      transition: $transition;
+      padding: $padding;
+
+      > box {
+        // icon | name | shortcut hint
+        image {
+          margin-right: $padding;
+          transition: $transition;
+        }
+      }
+
+      label.title {
+        color: $fg-color;
+        transition: $transition;
+      }
+
+      label.hint {
+        color: $subtle;
+      }
+
+      &:hover .title,
+      &:focus .title {
+        color: $accent;
+      }
+
+      &:active {
+        background-color: rgba($accent, 0.4);
+        border-radius: $radii;
+
+        .title {
+          color: $fg-color;
+        }
+      }
+    }
+  }
+}
