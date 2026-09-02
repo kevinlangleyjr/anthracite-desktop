@@ -39,6 +39,11 @@ end)
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
+-- Dark mode. GTK apps read it from gsettings (color-scheme = prefer-dark) and
+-- the GTK3 settings.ini; Qt has no such setting of its own, so point it at the
+-- xdg-desktop-portal theme plugin, which re-exports that same preference.
+hl.env("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
+
 
 -----------------------
 ---- LOOK AND FEEL ----
