@@ -204,6 +204,16 @@ hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
+-- Screenshots. screenshot.sh saves to ~/Pictures/Screenshots, copies to the
+-- clipboard, and notifies; region mode exits quietly if the selection is
+-- cancelled. Built from os.getenv so the path does not depend on exec_cmd
+-- running through a shell that would expand ~.
+local screenshot = (os.getenv("HOME") or "") .. "/.config/hypr/screenshot.sh"
+
+hl.bind("Print",         hl.dsp.exec_cmd(screenshot .. " screen"))
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd(screenshot .. " region"))
+hl.bind("ALT + Print",   hl.dsp.exec_cmd(screenshot .. " window"))
+
 -- Laptop multimedia keys (the AGS OSD reacts to these via wireplumber)
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
