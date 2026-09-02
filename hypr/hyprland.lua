@@ -132,6 +132,35 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
+-- Maximize, not true fullscreen: mode 1 fills the monitor minus reserved
+-- space and stays below the top layer, so the AGS bar and dock keep drawing.
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
+
+-- Alt+Tab window switching, drawn by the AGS "switcher" overlay. AGS owns the
+-- list and the selection; these binds only nudge it. Nothing is focused until
+-- Alt comes back up, so the list can't reorder underneath the walk — which is
+-- what made cycling over Hyprland's own window list ping-pong.
+local switching = false
+
+local function switcher(action)
+    hl.exec_cmd("ags request 'switcher " .. action .. "'")
+end
+
+hl.bind("ALT + Tab",         function() switching = true; switcher("next") end)
+hl.bind("ALT + SHIFT + Tab", function() switching = true; switcher("prev") end)
+
+-- Commit when Alt comes back up. Release *binds* never fire in 0.56 — a
+-- release bind on Alt_L logged nothing across a whole session of Alt+Tab
+-- presses, while the raw key events for those same presses came through
+-- fine — so watch the key stream instead. Keycodes are XKB (evdev + 8):
+-- 64 = Alt_L, 108 = Alt_R; state 0 is a release. The `switching` guard keeps
+-- this from spawning a request on every unrelated Alt release.
+hl.on("input.keyboard.key", function(keycode, _timestamp, state)
+    if switching and state == 0 and (keycode == 64 or keycode == 108) then
+        switching = false
+        switcher("commit")
+    end
+end)
 
 -- AGS shell windows (SUPER+M replaces the example's raw exit — the
 -- powermenu's Log Out does the same via confirmation)
@@ -151,10 +180,10 @@ hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }))
 hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
 
 -- Resize windows with mainMod + CTRL + arrows (split ratio tiled, size floating)
-hl.bind(mainMod .. " + CTRL + right", hl.dsp.exec_cmd("hyprctl dispatch resizeactive 40 0"),  { repeating = true })
-hl.bind(mainMod .. " + CTRL + left",  hl.dsp.exec_cmd("hyprctl dispatch resizeactive -40 0"), { repeating = true })
-hl.bind(mainMod .. " + CTRL + down",  hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 40"),  { repeating = true })
-hl.bind(mainMod .. " + CTRL + up",    hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 -40"), { repeating = true })
+hl.bind(mainMod .. " + CTRL + right", hl.dsp.window.resize({ x =  40, y =   0, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + CTRL + left",  hl.dsp.window.resize({ x = -40, y =   0, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + CTRL + down",  hl.dsp.window.resize({ x =   0, y =  40, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + CTRL + up",    hl.dsp.window.resize({ x =   0, y = -40, relative = true }), { repeating = true })
 
 -- Workspaces: mainMod + [0-9] to switch, + SHIFT to move the window
 for i = 1, 10 do
@@ -221,6 +250,17 @@ hl.window_rule({
     },
     no_focus = true,
 })
+
+
+-- Focused floating windows come to the front. Floats already render above
+-- tiled windows, but among themselves Hyprland only reshuffles the stack on
+-- click — focusing one by keybind or follow_mouse leaves it buried.
+hl.on("window.active", function()
+    local w = hl.get_active_window()
+    if w and w.floating then
+        hl.dispatch(hl.dsp.window.bring_to_top())
+    end
+end)
 
 
 ---------------------

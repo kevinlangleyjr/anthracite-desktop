@@ -1,0 +1,49 @@
+// Alt+Tab window switcher overlay
+@use "./palette" as *;
+@use "./common" as *;
+
+window#switcher {
+  background: transparent;
+
+  box.switcher {
+    @include floating-widget;
+    padding: $padding;
+    border-radius: $radii + $padding;
+    min-width: 380px;
+    // The shared $bg-color (80% alpha) lets window text bleed through and
+    // makes the entry list hard to read — the switcher sits over whatever
+    // you are tabbing away from, so keep it near-opaque.
+    background-color: rgba(#232833, 0.97);
+  }
+
+  box.switcher-entry {
+    @include widget;
+    background-color: transparent;
+    border-color: transparent;
+    padding: $padding * 0.6 $padding;
+
+    image {
+      color: $fg-color;
+    }
+
+    label.switcher-class {
+      color: $fg-color;
+      font-weight: bold;
+    }
+
+    label.switcher-title {
+      color: $muted;
+      font-size: 12px;
+    }
+
+    &.selected {
+      background-color: $hover;
+      border-color: $border-color;
+      box-shadow: inset 0 0 0 $border-width $accent;
+
+      label.switcher-class {
+        color: $hover-fg;
+      }
+    }
+  }
+}
