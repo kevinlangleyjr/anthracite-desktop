@@ -262,6 +262,17 @@ hl.window_rule({
     suppress_event = "maximize",
 })
 
+-- Everything floats. Hyprland renders tiled windows in a pass below floating
+-- ones, so a tiled window can never be raised above a floating neighbour — the
+-- switcher would move focus to it correctly and still leave it buried. With a
+-- single z-order stack the raise-on-focus hook below always works. SUPER+V
+-- still toggles an individual window back to tiled.
+hl.window_rule({
+    name  = "float-by-default",
+    match = { class = ".*" },
+    float = true,
+})
+
 hl.window_rule({
     name  = "float-file-dialogs",
     match = { title = "^(Open File|Open Files|Save File|Save Files|File Upload|Select a File)" },
