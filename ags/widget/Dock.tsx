@@ -6,7 +6,7 @@ import AstalHyprland from "gi://AstalHyprland"
 
 // Apps pinned to the dock, matched with fuzzy search against the app
 // database. Edit to taste — entries that don't resolve are skipped.
-const PINNED = ["kitty", "brave", "files", "obsidian"]
+const PINNED = ["kitty", "ghostty", "brave", "files", "obsidian"]
 
 export default function Dock() {
   const hypr = AstalHyprland.get_default()
