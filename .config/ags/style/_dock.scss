@@ -1,4 +1,5 @@
-// Port of widgets/dock.scss — floating bottom dock
+// macOS Big Sur dock: a floating, heavily blurred slab with a hairline edge,
+// magnifying icons, and a single dot under anything running.
 @use "./palette" as *;
 @use "./common" as *;
 
@@ -6,35 +7,50 @@ window#dock {
   background: transparent;
 
   box.dock {
-    @include floating-widget;
-    border-radius: $radii + $spacing * 0.5;
-    padding: $spacing * 0.5;
+    // Big Sur's dock is a much larger radius than a window and sits just off
+    // the screen edge rather than against it.
+    border-radius: 22px;
+    margin: 0 0 6px 0;
+    padding: 5px 7px;
+    background-color: rgba(#1e1e1e, 0.55);
+    // The light hairline is what separates the slab from a dark wallpaper —
+    // macOS uses an inner highlight rather than an outer border.
+    box-shadow:
+      inset 0 0 0 1px rgba($fg-color, 0.14),
+      0 10px 28px 0 rgba(#000000, 0.5);
 
-    button {
+    button.dock-item {
       background: none;
+      background-image: none;
       border: none;
       box-shadow: none;
-      border-radius: $radii;
+      border-radius: 12px;
+      padding: 0 2px;
+      // No hover background: on macOS the magnification *is* the feedback, and
+      // a highlight underneath it reads as a second, competing affordance.
       transition: $transition;
-      padding: 2px;
-
-      image {
-        margin: $padding * 0.5;
-      }
 
       &:hover {
-        background-color: $hover;
+        background: none;
       }
 
+      image {
+        margin: 2px 1px 0 1px;
+      }
+
+      // Big Sur marks a running app with one small dot centred beneath the
+      // icon, not a bar.
       .indicator {
-        min-width: 8px;
-        min-height: 3px;
-        border-radius: $radii;
-        margin-bottom: 2px;
+        font-size: 0;
+        min-width: 4px;
+        min-height: 4px;
+        border-radius: 2px;
+        margin: 3px 0 1px 0;
         background-color: transparent;
+        transition: $transition;
 
         &.running {
-          background-image: $active-gradient;
+          background-color: rgba($fg-color, 0.65);
         }
       }
     }
