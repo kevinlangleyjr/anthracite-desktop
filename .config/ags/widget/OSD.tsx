@@ -6,6 +6,11 @@ import AstalWp from "gi://AstalWp"
 
 const HIDE_DELAY_MS = 1500
 
+// macOS draws the level as a fixed row of discrete blocks rather than a
+// continuous bar, and the count is what makes it read as macOS rather than a
+// progress indicator.
+const SEGMENTS = 16
+
 export default function OSD() {
   const { defaultSpeaker: speaker } = AstalWp.get_default()!
 
@@ -49,14 +54,31 @@ export default function OSD() {
       layer={Astal.Layer.OVERLAY}
       application={app}
     >
-      <box class="osd" valign={Gtk.Align.CENTER}>
-        <image iconName={icon} pixelSize={24} />
-        <Gtk.LevelBar
+      <box
+        class="osd"
+        orientation={Gtk.Orientation.VERTICAL}
+        valign={Gtk.Align.CENTER}
+        halign={Gtk.Align.CENTER}
+      >
+        <box
+          orientation={Gtk.Orientation.VERTICAL}
           valign={Gtk.Align.CENTER}
-          widthRequest={260}
-          maxValue={1}
-          value={value}
-        />
+          halign={Gtk.Align.CENTER}
+          vexpand
+        >
+        <image class="osd-glyph" iconName={icon} pixelSize={80} />
+        <box class="osd-segments" spacing={3} halign={Gtk.Align.CENTER}>
+          {Array.from({ length: SEGMENTS }, (_, i) => (
+            <box
+              class={value((v) =>
+                // Round rather than floor so the last block only lights at the
+                // top of the range, and nothing lights at zero.
+                i < Math.round(v * SEGMENTS) ? "segment on" : "segment",
+              )}
+            />
+          ))}
+        </box>
+        </box>
       </box>
     </window>
   )

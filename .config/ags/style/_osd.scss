@@ -1,30 +1,43 @@
-// Port of widgets/osd.scss — volume/brightness indicator
+// macOS volume OSD: a large rounded square with an oversized glyph above a row
+// of discrete blocks, low on the screen.
 @use "./palette" as *;
 @use "./common" as *;
+
+$osd-size: 190px;
 
 window#osd {
   background: transparent;
 
   box.osd {
-    @include floating-widget;
-    padding: $padding;
-    border-radius: $radii + $padding;
+    min-width: $osd-size;
+    min-height: $osd-size;
+    border-radius: 20px;
+    padding: 22px;
+    // Sits well clear of the dock rather than against the screen edge.
+    margin-bottom: 140px;
+    background-color: rgba(#1e1e1e, 0.6);
+    box-shadow:
+      inset 0 0 0 1px rgba($fg-color, 0.14),
+      0 20px 50px 0 rgba(#000000, 0.5);
+  }
 
-    image {
-      color: $fg-color;
-      margin-right: $padding;
-    }
+  .osd-glyph {
+    color: $fg-color;
+    margin-bottom: 20px;
+  }
 
-    levelbar trough {
-      @include widget;
-      min-width: 260px;
-      min-height: 14px;
-      padding: 1px;
+  // Fixed-size blocks: the row must not resize as the level changes, or the
+  // whole panel breathes on every keypress.
+  .osd-segments .segment {
+    font-size: 0;
+    min-width: 6px;
+    min-height: 6px;
+    border-radius: 1px;
+    background-color: rgba($fg-color, 0.25);
+    transition: $transition;
 
-      block.filled {
-        border-radius: max($radii - $border-width, 0);
-        background-image: $active-gradient;
-      }
+    &.on {
+      background-color: $fg-color;
     }
   }
 }
