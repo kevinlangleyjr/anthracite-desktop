@@ -1,107 +1,160 @@
-// Port of widgets/quicksettings.scss (header, sliders, toggles, media)
+// macOS Control Center: a frosted panel of rounded modules hanging under the
+// right-hand end of the menu bar.
 @use "./palette" as *;
 @use "./common" as *;
 
+$cc-width: 340px;
+$circle: 34px;
+
 window#quicksettings {
   background: transparent;
+  color: $fg-color;
 
-  box.window-content {
-    @include floating-widget;
-    min-width: 380px;
+  box.control-center {
+    min-width: $cc-width;
+    border-radius: 16px;
+    padding: 12px;
+    // The window ignores the bar's exclusive zone, so it spans the full output
+    // and has to clear the 26px menu bar itself.
+    margin: 34px 8px 0 0;
+    background-color: rgba(#2c2c2e, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba($fg-color, 0.16),
+      0 20px 50px 0 rgba(#000000, 0.5);
+  }
 
-    .header {
-      .user {
-        font-weight: bold;
-        color: $fg-color;
-      }
+  // Every module is a rounded plate on the panel. Control Center's depth comes
+  // entirely from these stacking on the frosted background — there are no
+  // borders anywhere in it.
+  .cc-tile {
+    background-color: rgba($fg-color, 0.09);
+    border: none;
+    box-shadow: none;
+    border-radius: 12px;
+    padding: 10px;
+  }
 
-      .uptime {
-        color: $muted;
-      }
+  .cc-square {
+    min-width: 108px;
+    padding: 12px 10px;
+    transition: $transition;
 
-      .battery {
-        @include button;
-        padding: $padding * 0.6 $padding;
-        font-weight: bold;
+    &:hover {
+      background-color: rgba($fg-color, 0.14);
+    }
+  }
 
-        image {
-          margin-right: 4px;
-        }
-      }
+  .connectivity {
+    padding: 4px;
+  }
 
-      button {
-        @include button;
-        padding: $padding * 0.6;
-        min-height: 20px;
-        min-width: 20px;
-      }
+  // Rows inside the connectivity module are buttons, but must not look like
+  // them: the circle is the control, the row is just its hit area.
+  button.cc-row {
+    background: none;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 9px;
+    padding: 6px;
+    transition: $transition;
 
-      button.power image {
-        color: rgba($red, 0.8);
-      }
+    &:hover {
+      background-color: rgba($fg-color, 0.08);
+    }
+  }
 
-      button.power:hover image {
-        color: $red;
-      }
+  // The circle carries on/off state on its own. Labels never recolour, so the
+  // eye only has one place to read state from.
+  .cc-circle {
+    min-width: $circle;
+    min-height: $circle;
+    border-radius: $circle * 0.5;
+    background-color: rgba($fg-color, 0.16);
+    transition: $transition;
+
+    image {
+      color: $fg-color;
+      -gtk-icon-size: 17px;
+      margin: ($circle - 17px) * 0.5;
     }
 
-    .sliders-box {
-      @include widget;
-      padding: $padding;
-
-      button {
-        @include button($flat: true);
-        padding: $padding * 0.5;
-      }
-
-      scale {
-        @include slider;
-      }
-    }
-
-    .simple-toggle {
-      @include button;
-      padding: $padding $padding * 1.1;
-      font-weight: bold;
+    &.on {
+      background-color: $accent;
 
       image {
-        margin-right: 6px;
-      }
-
-      label.state {
-        color: $muted;
-        font-weight: normal;
-      }
-
-      &.active label.state {
         color: $accent-fg;
       }
     }
+  }
 
-    .media .player {
-      @include widget;
-      padding: $padding;
+  .cc-label {
+    color: $fg-color;
+    font-size: 0.95em;
+  }
 
-      .cover {
-        border-radius: $radii * 0.8;
-        min-width: 64px;
-        min-height: 64px;
-        background-size: cover;
-        background-position: center;
+  .cc-detail {
+    color: rgba($fg-color, 0.5);
+    font-size: 0.82em;
+  }
+
+  // Display and Sound. macOS draws the glyph inside the track; GTK's scale owns
+  // the full width of its allocation, so the glyph sits immediately left of the
+  // bar instead — the alternative is a fill that starts inset from the rounded
+  // end, which reads worse than the glyph being outside it.
+  .slider-tile {
+    .slider-glyph {
+      color: rgba($fg-color, 0.75);
+      -gtk-icon-size: 15px;
+      margin-right: 8px;
+    }
+
+    scale {
+      min-height: 26px;
+
+      trough {
+        min-height: 26px;
+        border-radius: 13px;
+        border: none;
+        background-color: rgba($fg-color, 0.16);
       }
 
-      .title {
+      highlight {
+        border-radius: 13px;
+        background-image: none;
+        background-color: rgba($fg-color, 0.92);
+      }
+
+      // macOS has no visible knob on these — the fill edge is the handle.
+      slider {
+        min-width: 0;
+        min-height: 0;
+        margin: 0;
+        background: none;
+        box-shadow: none;
+      }
+    }
+  }
+
+  .player {
+    .cover {
+      border-radius: 8px;
+    }
+
+    .player-controls button {
+      background: none;
+      background-image: none;
+      border: none;
+      box-shadow: none;
+      border-radius: 8px;
+      padding: 4px;
+
+      image {
         color: $fg-color;
-        font-weight: bold;
       }
 
-      .artist {
-        color: $muted;
-      }
-
-      button {
-        @include button($flat: true);
-        padding: $padding * 0.5;
+      &:hover {
+        background-color: rgba($fg-color, 0.12);
       }
     }
   }

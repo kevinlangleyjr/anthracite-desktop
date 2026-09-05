@@ -1,30 +1,15 @@
 import app from "ags/gtk4/app"
-import GLib from "gi://GLib"
-import { For, With, createBinding, createState } from "ags"
+import { For, With, createBinding } from "ags"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createPoll } from "ags/time"
 import { exec, execAsync } from "ags/process"
 import Pango from "gi://Pango"
 import Graphene from "gi://Graphene"
-import AstalBattery from "gi://AstalBattery"
 import AstalWp from "gi://AstalWp"
 import AstalNetwork from "gi://AstalNetwork"
 import AstalBluetooth from "gi://AstalBluetooth"
 import AstalNotifd from "gi://AstalNotifd"
 import AstalMpris from "gi://AstalMpris"
-
-function uptime(): string {
-  try {
-    const [ok, bytes] = GLib.file_get_contents("/proc/uptime")
-    if (!ok) return ""
-    const seconds = parseFloat(new TextDecoder().decode(bytes).split(" ")[0])
-    const h = Math.floor(seconds / 3600)
-    const m = Math.floor((seconds % 3600) / 60)
-    return h > 0 ? `up ${h}h ${m}m` : `up ${m}m`
-  } catch {
-    return ""
-  }
-}
 
 // brightnessctl -m => device,class,current,percent%,max
 function getBrightness(): number {
@@ -37,174 +22,193 @@ function getBrightness(): number {
   }
 }
 
-function Header({ onPower }: { onPower: () => void }) {
-  const battery = AstalBattery.get_default()
-  const percent = createBinding(
-    battery,
-    "percentage",
-  )((p) => `${Math.floor(p * 100)}%`)
-  const up = createPoll("", 60_000, uptime)
-
+// A circular icon button with its label beside it — Control Center's
+// connectivity rows. The circle carries the on/off state; the label never
+// changes colour, so the eye reads state from one place.
+function ToggleRow({
+  icon,
+  label,
+  state,
+  detail,
+  onToggle,
+}: {
+  icon: any
+  label: string
+  state: any
+  detail?: any
+  onToggle: () => void
+}) {
   return (
-    <box class="header" spacing={11}>
-      <label class="user" label={GLib.get_user_name()} />
-      <label class="uptime" label={up} />
-      <box hexpand />
-      <box class="battery" visible={createBinding(battery, "isPresent")}>
-        <image iconName={createBinding(battery, "iconName")} />
-        <label label={percent} />
+    <button class="cc-row" vexpand onClicked={onToggle}>
+      <box spacing={10}>
+        <box class={state((on: boolean) => (on ? "cc-circle on" : "cc-circle"))}>
+          <image iconName={icon} />
+        </box>
+        <box
+          valign={Gtk.Align.CENTER}
+          orientation={Gtk.Orientation.VERTICAL}
+          hexpand
+        >
+          <label class="cc-label" xalign={0} label={label} />
+          <label
+            class="cc-detail"
+            xalign={0}
+            visible={!!detail}
+            maxWidthChars={18}
+            ellipsize={Pango.EllipsizeMode.END}
+            label={detail ?? ""}
+          />
+        </box>
       </box>
-      <button class="power" onClicked={onPower}>
-        <image iconName="system-shutdown-symbolic" />
-      </button>
-    </box>
+    </button>
   )
 }
 
-function Sliders() {
-  const { defaultSpeaker: speaker } = AstalWp.get_default()!
-  const brightness = createPoll(-1, 5000, getBrightness)
-
+// The square modules on the right: a circle above its name, as Focus and
+// Screen Mirroring are drawn in Control Center.
+function ToggleTile({
+  icon,
+  label,
+  state,
+  onToggle,
+}: {
+  icon: string
+  label: string
+  state: any
+  onToggle: () => void
+}) {
   return (
-    <box class="sliders-box" orientation={Gtk.Orientation.VERTICAL} spacing={6}>
-      <box spacing={6}>
-        <button onClicked={() => speaker.set_mute(!speaker.mute)}>
-          <image iconName={createBinding(speaker, "volumeIcon")} />
-        </button>
-        <slider
-          hexpand
-          onChangeValue={({ value }) => speaker.set_volume(value)}
-          value={createBinding(speaker, "volume")}
-        />
+    <button class="cc-tile cc-square" onClicked={onToggle}>
+      <box
+        orientation={Gtk.Orientation.VERTICAL}
+        spacing={6}
+        halign={Gtk.Align.CENTER}
+      >
+        <box class={state((on: boolean) => (on ? "cc-circle on" : "cc-circle"))}>
+          <image iconName={icon} />
+        </box>
+        <label class="cc-label" label={label} />
       </box>
-      <box spacing={6} visible={brightness((b) => b >= 0)}>
-        <button>
-          <image iconName="display-brightness-symbolic" />
-        </button>
-        <slider
-          hexpand
-          onChangeValue={({ value }) =>
-            void execAsync(
-              `brightnessctl set ${Math.max(1, Math.round(value * 100))}% -q`,
-            ).catch(console.error)
-          }
-          value={brightness}
-        />
-      </box>
-    </box>
+    </button>
   )
 }
 
-function Toggles() {
+function Connectivity() {
   const network = AstalNetwork.get_default()
   const wifi = createBinding(network, "wifi")
   const bluetooth = AstalBluetooth.get_default()
   const btPowered = createBinding(bluetooth, "isPowered")
-  const notifd = AstalNotifd.get_default()
-  const dnd = createBinding(notifd, "dontDisturb")
-  const { defaultMicrophone: mic } = AstalWp.get_default()!
-  const micMuted = createBinding(mic, "mute")
 
   return (
-    <box orientation={Gtk.Orientation.VERTICAL} spacing={11}>
-      <box spacing={11} homogeneous>
-        <With value={wifi}>
-          {(w) =>
-            w && (
-              <button
-                class={createBinding(w, "enabled")((on) =>
-                  on ? "simple-toggle active" : "simple-toggle",
-                )}
-                onClicked={() => w.set_enabled(!w.enabled)}
-              >
-                <box spacing={6}>
-                  <image iconName={createBinding(w, "iconName")} />
-                  <label label="Wi-Fi" />
-                  <label
-                    class="state"
-                    hexpand
-                    halign={Gtk.Align.END}
-                    maxWidthChars={12}
-                    ellipsize={Pango.EllipsizeMode.END}
-                    label={createBinding(w, "ssid")((s) => s ?? "")}
-                  />
-                </box>
-              </button>
-            )
-          }
-        </With>
-        <button
-          class={btPowered((on) =>
-            on ? "simple-toggle active" : "simple-toggle",
-          )}
-          onClicked={() =>
-            void execAsync(
-              `bluetoothctl power ${bluetooth.isPowered ? "off" : "on"}`,
-            ).catch(console.error)
-          }
-        >
-          <box spacing={6}>
-            <image iconName="bluetooth-symbolic" />
-            <label label="Bluetooth" />
-          </box>
-        </button>
-      </box>
-      <box spacing={11} homogeneous>
-        <button
-          class={dnd((on) => (on ? "simple-toggle active" : "simple-toggle"))}
-          onClicked={() => notifd.set_dont_disturb(!notifd.dontDisturb)}
-        >
-          <box spacing={6}>
-            <image iconName="notifications-disabled-symbolic" />
-            <label label="Do Not Disturb" />
-          </box>
-        </button>
-        <button
-          class={micMuted((m) => (m ? "simple-toggle active" : "simple-toggle"))}
-          onClicked={() => mic.set_mute(!mic.mute)}
-        >
-          <box spacing={6}>
-            <image iconName="microphone-disabled-symbolic" />
-            <label label="Mute Mic" />
-          </box>
-        </button>
+    <box
+      class="cc-tile connectivity"
+      orientation={Gtk.Orientation.VERTICAL}
+      hexpand
+    >
+      <With value={wifi}>
+        {(w) =>
+          w && (
+            <ToggleRow
+              icon={createBinding(w, "iconName")}
+              label="Wi-Fi"
+              state={createBinding(w, "enabled")}
+              detail={createBinding(w, "ssid")((s) => s ?? "Off")}
+              onToggle={() => w.set_enabled(!w.enabled)}
+            />
+          )
+        }
+      </With>
+      <ToggleRow
+        icon="bluetooth-symbolic"
+        label="Bluetooth"
+        state={btPowered}
+        detail={btPowered((on: boolean) => (on ? "On" : "Off"))}
+        onToggle={() =>
+          void execAsync(
+            `bluetoothctl power ${bluetooth.isPowered ? "off" : "on"}`,
+          ).catch(console.error)
+        }
+      />
+    </box>
+  )
+}
+
+// Display and Sound are full-width slider modules, each labelled above its
+// track rather than beside it.
+function SliderTile({
+  label,
+  icon,
+  value,
+  onChange,
+  visible,
+}: {
+  label: string
+  icon: any
+  value: any
+  onChange: (v: number) => void
+  visible?: any
+}) {
+  return (
+    <box
+      class="cc-tile slider-tile"
+      orientation={Gtk.Orientation.VERTICAL}
+      spacing={6}
+      visible={visible ?? true}
+    >
+      <label class="cc-label" xalign={0} label={label} />
+      <box class="slider-track">
+        <image class="slider-glyph" iconName={icon} />
+        <slider
+          hexpand
+          onChangeValue={({ value: v }) => onChange(v)}
+          value={value}
+        />
       </box>
     </box>
   )
 }
 
-function Media() {
+function NowPlaying() {
   const mpris = AstalMpris.get_default()
   const players = createBinding(mpris, "players")
 
   return (
-    <box class="media" orientation={Gtk.Orientation.VERTICAL} spacing={11}>
+    <box
+      class="now-playing"
+      orientation={Gtk.Orientation.VERTICAL}
+      spacing={10}
+      visible={players((ps) => ps.some((p) => !!p.title))}
+    >
       <For each={players}>
         {(player) => (
-          <box class="player" spacing={11}>
+          <box
+            class="cc-tile player"
+            spacing={10}
+            visible={createBinding(player, "title")((t) => !!t)}
+          >
             <box overflow={Gtk.Overflow.HIDDEN} class="cover">
-              <image pixelSize={64} file={createBinding(player, "coverArt")} />
+              <image pixelSize={48} file={createBinding(player, "coverArt")} />
             </box>
             <box
               valign={Gtk.Align.CENTER}
               orientation={Gtk.Orientation.VERTICAL}
             >
               <label
-                class="title"
+                class="cc-label"
                 xalign={0}
-                maxWidthChars={22}
+                maxWidthChars={18}
                 ellipsize={Pango.EllipsizeMode.END}
                 label={createBinding(player, "title")((t) => t ?? "")}
               />
               <label
-                class="artist"
+                class="cc-detail"
                 xalign={0}
-                maxWidthChars={22}
+                maxWidthChars={18}
                 ellipsize={Pango.EllipsizeMode.END}
                 label={createBinding(player, "artist")((a) => a ?? "")}
               />
             </box>
-            <box hexpand halign={Gtk.Align.END}>
+            <box hexpand halign={Gtk.Align.END} class="player-controls">
               <button
                 onClicked={() => player.previous()}
                 visible={createBinding(player, "canGoPrevious")}
@@ -251,6 +255,10 @@ export default function QuickSettings() {
   let contentbox: Gtk.Box
 
   const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor
+  const { defaultSpeaker: speaker } = AstalWp.get_default()!
+  const { defaultMicrophone: mic } = AstalWp.get_default()!
+  const notifd = AstalNotifd.get_default()
+  const brightness = createPoll(-1, 5000, getBrightness)
 
   function onKey(
     _e: Gtk.EventControllerKey,
@@ -284,21 +292,47 @@ export default function QuickSettings() {
       <Gtk.GestureClick onPressed={onClick} />
       <box
         $={(ref) => (contentbox = ref)}
-        class="window-content"
+        class="control-center"
         valign={Gtk.Align.START}
         halign={Gtk.Align.END}
         orientation={Gtk.Orientation.VERTICAL}
-        spacing={11}
+        spacing={10}
       >
-        <Header
-          onPower={() => {
-            win.visible = false
-            app.toggle_window("powermenu")
-          }}
+        <box spacing={10}>
+          <Connectivity />
+          <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
+            <ToggleTile
+              icon="notifications-disabled-symbolic"
+              label="Focus"
+              state={createBinding(notifd, "dontDisturb")}
+              onToggle={() => notifd.set_dont_disturb(!notifd.dontDisturb)}
+            />
+            <ToggleTile
+              icon="microphone-disabled-symbolic"
+              label="Mic"
+              state={createBinding(mic, "mute")((m) => !m)}
+              onToggle={() => mic.set_mute(!mic.mute)}
+            />
+          </box>
+        </box>
+        <SliderTile
+          label="Display"
+          icon="display-brightness-high-symbolic"
+          value={brightness}
+          visible={brightness((b) => b >= 0)}
+          onChange={(v) =>
+            void execAsync(
+              `brightnessctl set ${Math.max(1, Math.round(v * 100))}% -q`,
+            ).catch(console.error)
+          }
         />
-        <Sliders />
-        <Toggles />
-        <Media />
+        <SliderTile
+          label="Sound"
+          icon={createBinding(speaker, "volumeIcon")}
+          value={createBinding(speaker, "volume")}
+          onChange={(v) => speaker.set_volume(v)}
+        />
+        <NowPlaying />
       </box>
     </window>
   )
