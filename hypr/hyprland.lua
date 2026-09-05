@@ -118,7 +118,13 @@ hl.config({
     input = {
         kb_layout = "us",
 
-        follow_mouse = 1,
+        -- 0 = focus only changes on click. The default (1) hands keyboard
+        -- focus to whatever window the cursor happens to pass over.
+        follow_mouse = 0,
+        -- Same idea for float toggles: at the default (1), flipping a window
+        -- between tiled and floating refocuses whatever sits under the cursor.
+        float_switch_override_focus = 0,
+
         sensitivity = 0,
 
         touchpad = {
