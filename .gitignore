@@ -1,0 +1,4 @@
+# Per-machine Hyprland settings (monitors, scale, host env), seeded by
+# install.sh from local.lua.example. Kept out of git so monitor config
+# survives pulls and branch switches.
+.config/hypr/local.lua

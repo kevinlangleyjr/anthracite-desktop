@@ -1,0 +1,14 @@
+# AUR packages for the Slatewave Hyprland desktop.
+# install.sh feeds these to whichever of paru / yay is present. Neither has a
+# repo equivalent, and without both there is no shell at all.
+
+# The ags CLI and runtime (v3+). This one package supplies both the bundler
+# and the library code the shell imports — see the AGS versions note in the
+# README for why package.json pins nothing and this is the real version to
+# match across machines.
+aylurs-gtk-shell-git
+
+# Astal service libraries (hyprland, battery, network, bluetooth, wireplumber,
+# mpris, notifd, tray, apps). Every widget imports from gi://Astal*, so a
+# missing one is an immediate startup error rather than a degraded feature.
+libastal-meta

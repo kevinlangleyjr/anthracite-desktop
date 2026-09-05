@@ -1,0 +1,109 @@
+# Official-repo packages for the Slatewave Hyprland desktop.
+# install.sh feeds these to `pacman -S --needed`. AUR packages are in
+# packages-aur.txt.
+#
+# Several names here would normally arrive as transitive dependencies of
+# something else. They are listed explicitly on purpose: the configs in this
+# repo invoke these binaries directly, so leaving them implicit means an
+# unrelated `pacman -Rns` can silently break the session with no clue why.
+
+# --- Compositor and its own tools -----------------------------------------
+hyprland
+hyprpaper
+hyprlock
+hypridle
+hyprpicker
+hyprcursor
+
+# --- Portals --------------------------------------------------------------
+# The portal is how sandboxed apps open file pickers and screencast, and it is
+# also where Qt reads the dark-mode preference from — see the
+# QT_QPA_PLATFORMTHEME env in hyprland.lua. The -gtk backend supplies the
+# actual file chooser and the appearance setting; -hyprland supplies
+# screencast/screenshot.
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+xdg-user-dirs
+
+# --- Login ----------------------------------------------------------------
+# greetd runs tuigreet on VT1 and launches `start-hyprland`. Both the service
+# and the config in etc/greetd/config.toml are required; enabling the service
+# is a separate step (see the README).
+greetd
+greetd-tuigreet
+
+# --- Session services -----------------------------------------------------
+# polkit's authentication *agent* — polkitd answers on D-Bus but draws no UI,
+# so without an agent anything asking for privileges (mounting a disk in
+# Nautilus, say) fails with no prompt at all. Started from hyprland.lua.
+polkit-kde-agent
+
+# Secret Service provider (org.freedesktop.secrets). 1Password stores its
+# two-factor token through it and reports "unable to save your two-factor
+# token" when nothing implements the interface. Needs the pam_gnome_keyring
+# lines in etc/pam.d/greetd to unlock with the login password.
+gnome-keyring
+
+# Battery/performance profile switching. Chosen over tlp because it exposes
+# profiles over D-Bus, which is how the AGS quick settings drive it — and the
+# two conflict if both are installed.
+power-profiles-daemon
+
+networkmanager
+network-manager-applet
+
+# bluez-utils supplies bluetoothctl, which QuickSettings.tsx shells out to for
+# the bluetooth toggle (widget/QuickSettings.tsx:142). It was absent
+# entirely until this list was written, so the toggle silently did nothing.
+bluez
+bluez-utils
+
+# --- Audio ----------------------------------------------------------------
+# wireplumber supplies wpctl, which the volume and mic keybinds call directly.
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+
+# --- Clipboard, screenshot, recording -------------------------------------
+# wl-clipboard supplies wl-paste/wl-copy. hyprland.lua runs two wl-paste
+# watchers at startup (text and image separately — wl-paste only reports one
+# MIME class per --watch), so a missing wl-clipboard means no clipboard
+# history at all.
+wl-clipboard
+cliphist
+wofi
+grim
+slurp
+satty
+wf-recorder
+
+# --- Keys and notifications -----------------------------------------------
+# libnotify supplies notify-send, used by screenshot.sh and record.sh. Without
+# it every script in .config/hypr fails silently at its last step.
+playerctl
+brightnessctl
+libnotify
+
+# --- Applications referenced by keybinds ----------------------------------
+# hyprland.lua hardcodes kitty as the terminal and nautilus as the file
+# manager. loupe and papers back the image/PDF entries in mimeapps.list —
+# without a viewer installed, xdg-open sends screenshots to a browser.
+kitty
+nautilus
+loupe
+papers
+
+# --- Toolkit and theming --------------------------------------------------
+qt5-wayland
+qt6-wayland
+
+# dart-sass compiles style.scss at shell launch (app.tsx imports it directly),
+# so the shell starts unstyled without it.
+dart-sass
+
+# --- Fonts ----------------------------------------------------------------
+# The bar and dock use Nerd Font glyphs throughout.
+ttf-jetbrains-mono-nerd
+ttf-hack-nerd
+noto-fonts-emoji
