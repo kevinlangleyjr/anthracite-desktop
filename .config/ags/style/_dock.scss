@@ -10,7 +10,11 @@ window#dock {
     // Big Sur's dock is a much larger radius than a window and sits just off
     // the screen edge rather than against it.
     border-radius: 22px;
-    margin: 0 0 6px 0;
+    // The top margin is headroom for the magnified icons, which are drawn
+    // outside the slab so it never changes height. It has to cover the tallest
+    // icon (ICON_SIZE * MAX_SCALE in Dock.tsx) or the lifted icon leaves the
+    // window and stops receiving the pointer.
+    margin: 24px 0 6px 0;
     padding: 5px 7px;
     background-color: rgba(#1e1e1e, 0.55);
     // The light hairline is what separates the slab from a dark wallpaper —
@@ -34,7 +38,9 @@ window#dock {
         background: none;
       }
 
-      image {
+      // Sized in Dock.tsx, since the slot is what keeps the row's geometry
+      // still while the icon inside it magnifies.
+      .icon-slot {
         margin: 2px 1px 0 1px;
       }
 
