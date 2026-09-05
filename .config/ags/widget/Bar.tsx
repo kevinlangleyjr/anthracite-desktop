@@ -19,14 +19,47 @@ import Tailscale from "./Tailscale"
 
 const WORKSPACE_COUNT = 5
 
-function LauncherButton() {
+function AppleMenuButton() {
   return (
     <button
-      class="panel-button launcher"
-      onClicked={() => app.toggle_window("launcher")}
+      class="panel-button apple-menu"
+      onClicked={() => app.toggle_window("powermenu")}
     >
-      <label class="nerd-icon" label="󰀘" />
+      <label class="apple-glyph" label={"\uF8FF"} />
     </button>
+  )
+}
+
+// The focused application's name, in bold, immediately right of the  menu —
+// the single most recognisable thing about a macOS menu bar. Hyprland reports
+// a window class ("org.gnome.Nautilus"); the app database turns that into the
+// name a person would recognise ("Files").
+function AppName() {
+  const hypr = AstalHyprland.get_default()
+  const apps = new AstalApps.Apps()
+  const focused = createBinding(hypr, "focusedClient")
+
+  return (
+    <box class="panel-button app-name">
+      <With value={focused}>
+        {(client) => {
+          const cls = client?.class ?? ""
+          // With nothing focused macOS shows Finder, since the desktop itself
+          // belongs to it.
+          if (!cls) return <label label="Finder" />
+          const [match] = apps.fuzzy_query(cls)
+          const name =
+            match?.name ?? cls.split(".").pop()!.replace(/^./, (c) => c.toUpperCase())
+          return (
+            <label
+              label={name}
+              maxWidthChars={28}
+              ellipsize={Pango.EllipsizeMode.END}
+            />
+          )
+        }}
+      </With>
+    </box>
   )
 }
 
@@ -53,33 +86,15 @@ function Workspaces() {
   )
 }
 
-function FocusedClient() {
-  const hypr = AstalHyprland.get_default()
-  const focused = createBinding(hypr, "focusedClient")
-
-  return (
-    <box class="panel-button focused-client">
-      <With value={focused}>
-        {(client) =>
-          client && (
-            <label
-              label={createBinding(client, "title")((t) => t ?? "")}
-              maxWidthChars={40}
-              ellipsize={Pango.EllipsizeMode.END}
-            />
-          )
-        }
-      </With>
-    </box>
-  )
-}
-
 function DateButton() {
   const notifd = AstalNotifd.get_default()
-  const time = createPoll(
-    "",
-    1000,
-    () => GLib.DateTime.new_now_local().format("%H:%M — %a %e.")!,
+  // %e space-pads the day and %l the hour, so collapse the runs rather than
+  // relying on the %-d / %-l glibc extensions, which GLib does not promise.
+  const time = createPoll("", 1000, () =>
+    GLib.DateTime.new_now_local()
+      .format("%a %b %e  %l:%M %p")!
+      .replace(/ +/g, " ")
+      .replace(/([0-9]) ([0-9])/, "$1  $2"),
   )
   const hasNotifs = createBinding(
     notifd,
@@ -87,7 +102,7 @@ function DateButton() {
   )((ns) => ns.length > 0)
 
   return (
-    <menubutton class="panel-button date">
+    <menubutton class="panel-button date clock status-item">
       <box spacing={6}>
         <image
           class="bell"
@@ -110,7 +125,7 @@ function Media() {
 
   return (
     <menubutton
-      class="panel-button media"
+      class="panel-button media status-item"
       visible={players((ps) => ps.length > 0)}
     >
       <box>
@@ -231,7 +246,7 @@ function SystemButton() {
 
   return (
     <button
-      class="panel-button quicksettings"
+      class="panel-button quicksettings status-item"
       onClicked={() => app.toggle_window("quicksettings")}
     >
       <box spacing={8}>
@@ -251,32 +266,17 @@ function BatteryPill() {
   return (
     <button
       class={percent((p) =>
-        p < 0.25 ? "panel-button battery-pill low" : "panel-button battery-pill",
+        p < 0.25
+          ? "panel-button battery-pill status-item low"
+          : "panel-button battery-pill status-item",
       )}
       visible={createBinding(battery, "isPresent")}
       onClicked={() => app.toggle_window("quicksettings")}
     >
-      <box spacing={6}>
-        <image iconName={createBinding(battery, "iconName")} />
-        <Gtk.LevelBar
-          valign={Gtk.Align.CENTER}
-          widthRequest={36}
-          maxValue={1}
-          value={percent}
-        />
+      <box spacing={4}>
         <label label={percent((p) => `${Math.floor(p * 100)}%`)} />
+        <image iconName={createBinding(battery, "iconName")} />
       </box>
-    </button>
-  )
-}
-
-function PowerButton() {
-  return (
-    <button
-      class="panel-button powermenu"
-      onClicked={() => app.toggle_window("powermenu")}
-    >
-      <image iconName="system-shutdown-symbolic" />
     </button>
   )
 }
@@ -302,21 +302,19 @@ export default function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
     >
       <centerbox class="panel">
         <box $type="start">
-          <LauncherButton />
-          <Workspaces />
-          <FocusedClient />
+          <AppleMenuButton />
+          <AppName />
         </box>
-        <box $type="center">
-          <DateButton />
-          <Media />
-        </box>
+        <box $type="center" />
         <box $type="end">
           <SystemStats />
+          <Media />
           <Tray />
           <Tailscale />
+          <Workspaces />
           <SystemButton />
           <BatteryPill />
-          <PowerButton />
+          <DateButton />
         </box>
       </centerbox>
     </window>

@@ -1,44 +1,57 @@
-// Slatewave palette — canonical values from slatewave-omp / delta-slatewave.
-// Geometry tokens carry over Aylur's "Space" theme (spacing 11, padding 10,
-// radii 12) so the layout reads the same; only the colors are Slatewave.
+// macOS dark-mode system colours.
+//
+// Values are Apple's published dark-appearance system colours rather than
+// eyeballed approximations, so the shell matches the WhiteSur GTK theme and
+// Ghostty's "Apple System Colors" without a third set of hand-picked hexes.
+//
+// Variable names are deliberately unchanged from the previous palette: every
+// other partial in this directory consumes them, so recolouring the whole
+// shell is this file and nothing else.
 
-// core
-$slate-deep: #1a1e26;
-$slate-bg: #2c313a;
-$surface: #3e4451;
-$fg-color: #e2e8f0;
-$muted: #94a3b8;
-$subtle: #64748b;
-$line: #475569;
+// core surfaces — Apple's windowBackground / underPageBackground scale
+$slate-deep: #1c1c1e;
+$slate-bg: #1e1e1e;
+$surface: #2c2c2e;
 
-// named colors
-$red: #fb7185; // rose
-$green: #34d399; // emerald
-$yellow: #fbbf24; // amber
-$blue: #38bdf8; // sky
-$magenta: #b388ff;
-$teal: #5eead4;
-$orange: #fb923c;
+// labels
+$fg-color: #ffffff;
+$muted: #98989d; // secondaryLabel
+$subtle: #6e6e73; // tertiaryLabel
+$line: #48484a; // separator
 
-// accent
-$accent: $teal;
-$accent-fg: #193549;
-$active-gradient: linear-gradient(to right, #5eead4, #2dd4bf);
+// system colours (dark appearance)
+$red: #ff453a; // systemRed
+$green: #30d158; // systemGreen
+$yellow: #ffd60a; // systemYellow
+$blue: #0a84ff; // systemBlue
+$magenta: #bf5af2; // systemPurple
+$teal: #64d2ff; // systemCyan
+$orange: #ff9f0a; // systemOrange
 
-// space-theme geometry
-$spacing: 11px;
-$padding: 10px;
-$radii: 12px;
+// accent — macOS defaults to systemBlue, and puts white on top of it
+$accent: $blue;
+$accent-fg: #ffffff;
+// Accent fills in macOS are near-flat; the slight top lift is what keeps a
+// selected menu row from looking like a printed block.
+$active-gradient: linear-gradient(to bottom, #3d9bff, #0a84ff);
+
+// geometry — macOS radii are tighter than the Space theme's: controls and menu
+// rows sit around 6-7px, popovers around 10-12px.
+$spacing: 8px;
+$padding: 9px;
+$radii: 7px;
 $border-width: 1px;
-$popover-padding: $padding * 1.6;
-$popover-radius: $radii + $padding;
+$popover-padding: $padding * 1.2;
+$popover-radius: 12px;
 
-// derived surfaces (the v1 formulas, applied to Slatewave values)
-$bg-color: rgba(#232833, 0.8); // theme.bg — space used near-black at 70%
-$widget-bg: rgba($fg-color, 0.06);
-$hover: rgba($fg-color, 0.14);
-$hover-fg: #f1f5f9;
-$border-color: rgba($line, 0.55);
-$popover-border-color: rgba($line, 0.7);
-$shadow: rgba(#0b0e13, 0.6);
-$transition: 200ms;
+// derived surfaces. Panels are translucent and rely on the compositor blurring
+// behind them — see the layer rules in hyprland.lua. Without those the alpha
+// reads as flat grey rather than frosted glass.
+$bg-color: rgba(#1e1e1e, 0.72);
+$widget-bg: rgba($fg-color, 0.08);
+$hover: rgba($fg-color, 0.12);
+$hover-fg: #ffffff;
+$border-color: rgba($fg-color, 0.1);
+$popover-border-color: rgba($fg-color, 0.14);
+$shadow: rgba(#000000, 0.45);
+$transition: 150ms;

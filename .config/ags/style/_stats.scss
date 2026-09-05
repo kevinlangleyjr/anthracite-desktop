@@ -7,22 +7,19 @@ window#bar .stats {
     font-size: 1.05em;
   }
 
-  .cpu .nerd-icon {
-    color: $blue;
-  }
-
-  .ram .nerd-icon {
-    color: $magenta;
-  }
-
+  // Monochrome in the bar. macOS puts nothing like this in the menu bar at
+  // all, and per-metric colour is what made it read as a Linux panel applet;
+  // the warm/high states below keep the only colour that carries information.
+  .cpu .nerd-icon,
+  .ram .nerd-icon,
   .temp .nerd-icon {
-    color: $orange;
+    color: rgba($fg-color, 0.7);
   }
 
   // fixed width so the readouts don't shove the tray around as they change
   .value {
     min-width: 32px;
-    color: $fg-color;
+    color: rgba($fg-color, 0.85);
   }
 
   .value.warm {

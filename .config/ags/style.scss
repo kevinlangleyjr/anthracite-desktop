@@ -1,5 +1,5 @@
-// Slatewave Space — AGS v3 (GTK4) shell styled with the Slatewave palette,
-// recreating the layout of Aylur's ags-pre-ts "Space" theme.
+// macOS-style AGS v3 (GTK4) shell: menu bar, dock and Spotlight launcher on
+// Apple's dark-appearance system colours.
 @use "./style/palette" as *;
 @use "./style/bar";
 @use "./style/launcher";
@@ -12,7 +12,11 @@
 @use "./style/stats";
 @use "./style/tailscale";
 
+// SF Pro Text is the macOS UI face, from the apple-fonts package. 13px is the
+// menu bar's actual size; the fallbacks keep the shell legible if the font is
+// not installed yet.
 * {
+  font-family: "SF Pro Text", "SF Pro Display", "Inter", sans-serif;
   font-size: 13px;
 }
 

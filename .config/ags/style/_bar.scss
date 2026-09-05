@@ -1,44 +1,68 @@
-// Port of widgets/bar.scss with the Space theme's choices baked in:
-// bar.style 'normal', flat_buttons false, no separators.
+// macOS menu bar.
+//
+// The menu bar is not a panel of buttons — it is a translucent strip of flat
+// text. Nothing has a background until you interact with it, and then the
+// highlight is a small accent-blue rounded rect, not a raised pill. Getting
+// that right is mostly about removing the chrome the Space theme added.
 @use "./palette" as *;
 @use "./common" as *;
 
-$bar-spacing: 5px;
+// Apple's menu bar is 24pt; 26px reads correctly on a 1920x1200 panel.
+$menubar-height: 26px;
+$item-radius: 5px;
 
 window#bar {
   background: transparent;
   color: $fg-color;
 
   > box.panel {
-    background-color: $bg-color;
-    border-bottom: $border-width solid $border-color;
+    min-height: $menubar-height;
+    // Darker and more transparent than the popovers: the menu bar sits
+    // directly on the wallpaper and leans hardest on the compositor blur.
+    background-color: rgba(#000000, 0.4);
+    // macOS has no rule under the menu bar, just the density change. A hairline
+    // keeps it from bleeding into a dark wallpaper.
+    border-bottom: $border-width solid rgba($fg-color, 0.07);
+    padding: 0 $padding * 0.7;
   }
 
+  // Every top-level item: flat, no background, tight horizontal padding.
   .panel-button {
     background: none;
     border: none;
     box-shadow: none;
     padding: 0;
+    min-height: $menubar-height;
 
     > box,
     > label,
     > image {
-      @include button;
-      border-radius: $radii;
-      margin: $bar-spacing;
-      padding: $padding * 0.4 $padding * 0.8;
-      font-weight: bold;
+      background: none;
+      background-image: none;
+      border: none;
+      box-shadow: none;
+      border-radius: $item-radius;
+      margin: 0;
+      padding: 1px $padding * 0.65;
+      font-weight: normal;
+      color: rgba($fg-color, 0.92);
+      transition: $transition;
     }
 
+    // Menu-bar items highlight in accent blue, not grey.
     &:hover > box,
     &:hover > label,
     &:hover > image {
-      @include button-hover;
+      background-color: $accent;
+      color: $accent-fg;
+      box-shadow: none;
     }
 
     &:active > box,
     &.active > box {
-      @include button-active;
+      background-color: $accent;
+      background-image: none;
+      box-shadow: none;
 
       label,
       image {
@@ -47,122 +71,135 @@ window#bar {
     }
   }
 
-  // menubutton variants of panel buttons (date, media) — style the inner button
   menubutton.panel-button {
     > button {
       background: none;
       border: none;
       box-shadow: none;
       padding: 0;
+      min-height: $menubar-height;
 
       > box {
-        @include button;
-        border-radius: $radii;
-        margin: $bar-spacing;
-        padding: $padding * 0.4 $padding * 0.8;
-        font-weight: bold;
+        background: none;
+        background-image: none;
+        border: none;
+        box-shadow: none;
+        border-radius: $item-radius;
+        margin: 0;
+        padding: 1px $padding * 0.65;
+        font-weight: normal;
+        color: rgba($fg-color, 0.92);
+        transition: $transition;
       }
 
       &:hover > box {
-        @include button-hover;
+        background-color: $accent;
+        color: $accent-fg;
       }
     }
   }
 
-  .launcher label {
-    color: $accent;
-    font-size: 1.2em;
+  //  — the Apple menu. Slightly larger optically than the text beside it.
+  .apple-menu label.apple-glyph {
+    // U+F8FF is Apple's private-use logo codepoint and exists only in the SF
+    // faces, so this must not inherit the Nerd Font stack.
+    font-family: "SF Pro Text", "SF Pro", sans-serif;
+    color: rgba($fg-color, 0.95);
+    font-size: 1.1em;
+    padding: 0 $padding * 0.55;
   }
 
-  .powermenu image {
-    color: rgba($red, 0.7);
+  // The focused application's name, always the boldest thing on the bar.
+  .app-name label {
+    font-weight: 600;
+    color: $fg-color;
   }
 
-  .powermenu:hover image {
-    color: rgba($red, 0.85);
+  // File / Edit / View — regular weight, sitting to the right of the app name.
+  .app-menu label {
+    font-weight: normal;
+    color: rgba($fg-color, 0.92);
   }
 
-  .powermenu:active image {
-    color: $red;
+  // Status items on the right are icon-first and sit closer together than the
+  // menus on the left.
+  .status-item {
+    > box,
+    > label,
+    > image {
+      padding: 1px $padding * 0.5;
+    }
   }
 
-  .date .bell {
-    color: $yellow;
+  .clock label {
+    color: rgba($fg-color, 0.95);
+    font-variant-numeric: tabular-nums;
   }
 
-  .media .player-icon {
-    color: $green;
-  }
-
-  .quicksettings image.bluetooth {
-    color: $blue;
-  }
-
-  .focused-client label {
-    color: rgba($fg-color, 0.9);
-  }
-
+  // macOS has no Spaces indicator in the menu bar. These are kept because the
+  // workspaces are genuinely used, but reduced to the smallest thing that still
+  // reads: dots on the right, well away from the menus.
   .workspaces button {
     background: none;
     border: none;
     box-shadow: none;
-    padding: 0 2px;
+    padding: 0 1px;
+    min-height: $menubar-height;
 
     .indicator {
       font-size: 0;
-      min-width: 8px;
-      min-height: 8px;
-      border-radius: $radii * 0.6;
-      box-shadow: inset 0 0 0 $border-width $border-color;
-      margin: 0 $padding * 0.5;
+      // The vertical margins are what hold this to a dot — GTK4 CSS has no
+      // max-height, and the box would otherwise stretch to the bar's height.
+      min-width: 6px;
+      min-height: 6px;
+      border-radius: 3px;
+      margin: 10px 2px;
       transition: $transition;
-      background-color: rgba($fg-color, 0.2);
+      background-color: rgba($fg-color, 0.25);
+      box-shadow: none;
     }
 
     &.occupied .indicator {
-      background-color: rgba($fg-color, 0.8);
-      min-width: 10px;
-      min-height: 10px;
+      background-color: rgba($fg-color, 0.5);
     }
 
     &:hover .indicator {
-      background-color: rgba($fg-color, 0.5);
+      background-color: rgba($fg-color, 0.7);
     }
 
     &.active .indicator,
     &:active .indicator {
-      background-color: $accent;
-      background-image: $active-gradient;
-    }
-
-    &.active .indicator {
-      min-width: 24px;
-      min-height: 16px;
+      background-color: $fg-color;
+      background-image: none;
+      min-width: 6px;
+      min-height: 6px;
     }
   }
 
+  // Battery reads as "87%" beside the glyph, as on macOS — no level bar.
   .battery-pill {
-    levelbar trough {
-      @include widget;
-      min-width: 36px;
-      min-height: 12px;
-      padding: 1px;
-
-      block.filled {
-        border-radius: max($radii - $border-width, 0);
-        background-image: $active-gradient;
-      }
+    levelbar {
+      // GTK still allocates the widget, so collapse rather than hide it to
+      // avoid a gap where the bar used to be.
+      min-width: 0;
+      min-height: 0;
     }
 
-    &.low {
-      label {
-        color: $red;
-      }
-
-      levelbar trough block.filled {
-        background-image: linear-gradient(to right, $red, $red);
-      }
+    &.low label {
+      color: $red;
     }
+  }
+
+  .date .bell {
+    color: rgba($fg-color, 0.92);
+  }
+
+  .media .player-icon {
+    color: rgba($fg-color, 0.92);
+  }
+
+  .quicksettings image.bluetooth {
+    color: rgba($fg-color, 0.92);
   }
 
   .tray-item > button > box {
