@@ -41,8 +41,8 @@ hl.on("hyprland.start", function()
 end)
 
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("ags toggle launcher"))
-hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("ags toggle quicksettings"))
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("ags toggle powermenu"))
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("ags toggle quicksettings"))
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("ags toggle powermenu"))
 ```
 
 Wallpaper — `~/.config/hypr/hyprpaper.conf`:
