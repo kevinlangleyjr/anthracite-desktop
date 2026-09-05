@@ -1,84 +1,112 @@
-// Port of widgets/powermenu.scss — big icon buttons + verification dialog
+// The  menu and its confirmation dialog.
+//
+// macOS menus are narrow, tightly-spaced lists of plain text — no icons, no
+// raised buttons — highlighted in accent blue a row at a time.
+@use "sass:color";
 @use "./palette" as *;
 @use "./common" as *;
 
 window#powermenu {
-  background: rgba(#0b0e13, 0.05);
+  background: transparent;
 
-  box.window-content {
-    @include floating-widget;
-    padding: $popover-padding + $spacing * 1.5;
-    border-radius: $popover-radius + $padding;
+  box.apple-menu-popup {
+    min-width: 210px;
+    border-radius: 8px;
+    padding: 5px;
+    // Hangs from just under the 26px menu bar, aligned with the  glyph.
+    margin: 28px 0 0 4px;
+    background-color: rgba(#2c2c2e, 0.78);
+    box-shadow:
+      inset 0 0 0 1px rgba($fg-color, 0.16),
+      0 16px 40px 0 rgba(#000000, 0.55);
+  }
 
-    button {
-      background: none;
-      border: none;
+  button.menu-item {
+    background: none;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 5px;
+    padding: 4px 10px;
+    transition: none;
+
+    label {
+      color: rgba($fg-color, 0.92);
+    }
+
+    // Menu rows highlight the full width in accent blue, which is why the
+    // radius is small and the padding tight — a rounded pill would read as a
+    // button rather than a menu row. Keyboard focus takes the same highlight
+    // rather than Adwaita's outline ring: in a menu the two are the same idea,
+    // and a ring around one row while another is hovered reads as two
+    // selections.
+    &:hover,
+    &:focus {
+      background-color: $accent;
+      outline: none;
       box-shadow: none;
-      padding: 0;
-
-      image {
-        @include button;
-        border-radius: $popover-radius;
-        min-width: 70px;
-        min-height: 70px;
-        font-size: 3em;
-        color: rgba($fg-color, 0.9);
-      }
 
       label {
-        color: rgba($fg-color, 0.9);
-        margin-top: $padding * 0.5;
-      }
-
-      &:hover image {
-        @include button-hover;
-      }
-
-      &:focus image {
-        @include button-focus;
-      }
-
-      &:active image {
-        @include button-active;
-      }
-
-      &:focus label,
-      &:active label {
-        color: $accent;
+        color: $accent-fg;
       }
     }
+  }
+
+  .menu-separator {
+    min-height: 1px;
+    background-color: rgba($fg-color, 0.14);
+    margin: 5px 8px;
   }
 }
 
 window#verification {
-  background: rgba(#0b0e13, 0.05);
+  background: transparent;
 
-  box.window-content {
-    @include floating-widget;
-    min-width: 300px;
+  box.confirm-dialog {
+    min-width: 360px;
+    border-radius: 12px;
+    padding: 20px;
+    background-color: rgba(#2c2c2e, 0.88);
+    box-shadow:
+      inset 0 0 0 1px rgba($fg-color, 0.16),
+      0 28px 70px 0 rgba(#000000, 0.6);
 
-    .title {
-      font-size: 1.6em;
+    .question {
       color: $fg-color;
+      font-size: 0.95em;
+      font-weight: 600;
     }
 
-    .desc {
-      color: rgba($fg-color, 0.8);
-      font-size: 1.1em;
-    }
+    .dialog-buttons button {
+      background-color: rgba($fg-color, 0.14);
+      background-image: none;
+      border: none;
+      box-shadow: none;
+      border-radius: 7px;
+      padding: 6px 18px;
+      min-width: 78px;
+      transition: $transition;
 
-    .buttons {
-      margin-top: $padding;
-
-      button {
-        @include button;
-        font-size: 1.2em;
-        padding: $padding;
-        min-width: 100px;
+      label {
+        color: $fg-color;
       }
 
-      button.confirm:hover {
-        background-color: rgba($red, 0.4);
+      &:hover {
+        background-color: rgba($fg-color, 0.2);
+      }
+
+      // The default action is the tinted one, and it is the confirming action
+      // rather than Cancel — matching macOS, where Return commits.
+      &.default {
+        background-color: $accent;
+
+        label {
+          color: $accent-fg;
+        }
+
+        &:hover {
+          background-color: color.adjust($accent, $lightness: 6%);
+        }
       }
     }
   }

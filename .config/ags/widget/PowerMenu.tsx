@@ -5,16 +5,42 @@ import { execAsync } from "ags/process"
 import Graphene from "gi://Graphene"
 
 type Action = {
-  icon: string
   label: string
   cmd: string
+  // macOS suffixes a menu item with an ellipsis when choosing it opens a
+  // confirmation rather than acting immediately, so this drives both the
+  // dialog and the label.
+  confirm: boolean
+  question?: string
 }
 
+// Ordered as the  menu orders them: the power group, a separator, then the
+// session group.
 const ACTIONS: Action[] = [
-  { icon: "weather-clear-night-symbolic", label: "Sleep", cmd: "systemctl suspend" },
-  { icon: "system-reboot-symbolic", label: "Reboot", cmd: "systemctl reboot" },
-  { icon: "system-log-out-symbolic", label: "Log Out", cmd: "hyprctl dispatch exit" },
-  { icon: "system-shutdown-symbolic", label: "Shutdown", cmd: "systemctl poweroff" },
+  { label: "Sleep", cmd: "systemctl suspend", confirm: false },
+  {
+    label: "Restart",
+    cmd: "systemctl reboot",
+    confirm: true,
+    question: "Are you sure you want to restart your computer now?",
+  },
+  {
+    label: "Shut Down",
+    cmd: "systemctl poweroff",
+    confirm: true,
+    question: "Are you sure you want to shut down your computer now?",
+  },
+  { label: "SEPARATOR", cmd: "", confirm: false },
+  { label: "Lock Screen", cmd: "loginctl lock-session", confirm: false },
+  {
+    label: "Log Out",
+    // `hyprctl dispatch exit` is what this used to run, and it silently did
+    // nothing: this Hyprland parses dispatch payloads as Lua, so a bare `exit`
+    // resolves to nil rather than the dispatcher.
+    cmd: "hyprctl dispatch hl.dsp.exit()",
+    confirm: true,
+    question: "Are you sure you want to quit all applications and log out now?",
+  },
 ]
 
 const [pending, setPending] = createState<Action | null>(null)
@@ -25,8 +51,16 @@ export function PowerMenu() {
 
   const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor
 
+  function run(action: Action) {
+    void execAsync(action.cmd).catch(console.error)
+  }
+
   function choose(action: Action) {
     win.visible = false
+    if (!action.confirm) {
+      run(action)
+      return
+    }
     setPending(action)
     const verification = app.get_window("verification")
     if (verification) verification.visible = true
@@ -62,21 +96,27 @@ export function PowerMenu() {
     >
       <Gtk.EventControllerKey onKeyPressed={onKey} />
       <Gtk.GestureClick onPressed={onClick} />
+      {/* Drops from under the  glyph at the left end of the menu bar, rather
+          than floating in the middle of the screen. */}
       <box
         $={(ref) => (contentbox = ref)}
-        class="window-content"
-        valign={Gtk.Align.CENTER}
-        halign={Gtk.Align.CENTER}
-        spacing={22}
+        class="apple-menu-popup"
+        valign={Gtk.Align.START}
+        halign={Gtk.Align.START}
+        orientation={Gtk.Orientation.VERTICAL}
       >
-        {ACTIONS.map((action) => (
-          <button onClicked={() => choose(action)}>
-            <box orientation={Gtk.Orientation.VERTICAL} spacing={6}>
-              <image iconName={action.icon} pixelSize={42} />
-              <label label={action.label} />
-            </box>
-          </button>
-        ))}
+        {ACTIONS.map((action) =>
+          action.label === "SEPARATOR" ? (
+            <box class="menu-separator" />
+          ) : (
+            <button class="menu-item" onClicked={() => choose(action)}>
+              <label
+                xalign={0}
+                label={action.confirm ? `${action.label}…` : action.label}
+              />
+            </button>
+          ),
+        )}
       </box>
     </window>
   )
@@ -127,25 +167,26 @@ export function Verification() {
       <Gtk.GestureClick onPressed={onClick} />
       <box
         $={(ref) => (contentbox = ref)}
-        class="window-content"
+        class="confirm-dialog"
         valign={Gtk.Align.CENTER}
         halign={Gtk.Align.CENTER}
         orientation={Gtk.Orientation.VERTICAL}
-        spacing={11}
+        spacing={16}
       >
-        <box class="text-box" orientation={Gtk.Orientation.VERTICAL} spacing={4}>
-          <label
-            class="title"
-            label={pending((a) => (a ? `${a.label}?` : ""))}
-          />
-          <label class="desc" label="Are you sure?" />
-        </box>
-        <box class="buttons" spacing={11} homogeneous>
+        <label
+          class="question"
+          wrap
+          maxWidthChars={38}
+          xalign={0}
+          label={pending((a) => a?.question ?? "")}
+        />
+        {/* macOS right-aligns dialog buttons with the default action last. */}
+        <box class="dialog-buttons" spacing={10} halign={Gtk.Align.END}>
           <button onClicked={() => (win.visible = false)}>
-            <label label="No" />
+            <label label="Cancel" />
           </button>
-          <button class="confirm" onClicked={confirm}>
-            <label label="Yes" />
+          <button class="default" onClicked={confirm}>
+            <label label={pending((a) => a?.label ?? "")} />
           </button>
         </box>
       </box>
