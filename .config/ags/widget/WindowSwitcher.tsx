@@ -30,6 +30,35 @@ export default function WindowSwitcher() {
   const [view, setView] = createState<View>({ entries: [], index: 0 })
   const [visible, setVisible] = createState(false)
 
+  // Most-recently-used order, most recent first. This is the whole reason
+  // Cmd+Tab toggles: with recency ordering the current window is index 0 and
+  // the one you came from is index 1, so a press-and-release lands on it, and
+  // repeating the gesture lands back where you started. Creation order cannot
+  // do that -- it walks the same direction every time.
+  const mru: string[] = []
+
+  // hyprctl reports addresses bare ("5a1b2c3d") while AstalHyprland includes
+  // the 0x prefix, so both have to be normalised or the two never match.
+  const key = (address?: string | null) =>
+    (address ?? "").replace(/^0x/, "").toLowerCase()
+
+  function touch(address?: string | null) {
+    const k = key(address)
+    if (!k) return
+    const at = mru.indexOf(k)
+    if (at !== -1) mru.splice(at, 1)
+    mru.unshift(k)
+  }
+
+  touch(hypr.get_focused_client()?.address)
+  hypr.connect("notify::focused-client", () => {
+    // Nothing is focused while the overlay is walking -- commit() is what moves
+    // focus -- but guard anyway so a stray focus event cannot reorder the list
+    // underneath an open walk.
+    if (open) return
+    touch(hypr.get_focused_client()?.address)
+  })
+
   // The frozen list the overlay is walking. Snapshotting on open is what makes
   // the cycle stable: focus never moves until commit, so nothing reorders
   // underneath us mid-walk.
@@ -91,9 +120,27 @@ export default function WindowSwitcher() {
     const stableId = (c: any) =>
       typeof c.stableId === "number" ? c.stableId : parseInt(c.stableId, 16)
 
-    const list = clients
-      .filter((c: any) => c.mapped && !c.hidden && c.workspace?.id === workspace)
-      .sort((a: any, b: any) => stableId(a) - stableId(b))
+    const visible = clients.filter(
+      (c: any) => c.mapped && !c.hidden && c.workspace?.id === workspace,
+    )
+
+    // Drop addresses for windows that have since closed, so the list cannot
+    // grow without bound over a session.
+    const live = new Set(clients.map((c: any) => key(c.address)))
+    for (let i = mru.length - 1; i >= 0; i--) {
+      if (!live.has(mru[i])) mru.splice(i, 1)
+    }
+
+    const list = visible.sort((a: any, b: any) => {
+      const ia = mru.indexOf(key(a.address))
+      const ib = mru.indexOf(key(b.address))
+      // A window that has never held focus has no recency, so it sorts after
+      // everything that does, keeping creation order among themselves.
+      if (ia === -1 && ib === -1) return stableId(a) - stableId(b)
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
 
     entries = list.map((c: any) => ({
       address: c.address,
