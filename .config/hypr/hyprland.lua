@@ -382,6 +382,27 @@ hl.window_rule({
 })
 
 
+-- The AGS surfaces are translucent by design and rely on the compositor to
+-- blur what is behind them. Without these rules the alpha reads as flat grey
+-- over whatever happens to be underneath -- a menu bar you can read the
+-- terminal through, rather than frosted glass. `ignorealpha` keeps the blur
+-- from bleeding through the fully transparent parts of each layer, which is
+-- most of the launcher and dock surfaces. Without it the launcher -- which is
+-- a fullscreen layer with a transparent background -- blurs the entire
+-- desktop rather than just the panel drawn on it.
+for _, ns in ipairs({
+    "bar", "dock", "launcher", "quicksettings",
+    "powermenu", "osd", "notifications", "switcher", "verification",
+}) do
+    hl.layer_rule({
+        name  = "blur-" .. ns,
+        match = { namespace = ns },
+        blur  = true,
+        ignore_alpha = 0.2,
+    })
+end
+
+
 -- Focused floating windows come to the front. Floats already render above
 -- tiled windows, but among themselves Hyprland only reshuffles the stack on
 -- click — focusing one by keybind or follow_mouse leaves it buried.

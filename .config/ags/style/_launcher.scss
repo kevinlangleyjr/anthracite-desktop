@@ -1,65 +1,124 @@
-// Port of widgets/applauncher.scss
+// Spotlight.
+//
+// The defining trait is that the search field *is* the window — no inner
+// border, no visible entry chrome, just oversized text on a blurred slab, with
+// results growing beneath a hairline.
 @use "./palette" as *;
 @use "./common" as *;
+
+$spotlight-width: 680px;
 
 window#launcher {
   background: transparent;
   color: $fg-color;
 
   box#launcher-content {
-    @include floating-widget;
-    min-width: 500px;
+    min-width: $spotlight-width;
+    border-radius: 14px;
+    padding: 0;
+    background-color: rgba(#1e1e1e, 0.72);
+    // Inset hairline plus a deep shadow, matching the dock — macOS lights the
+    // rim of a floating panel rather than stroking its outside.
+    box-shadow:
+      inset 0 0 0 1px rgba($fg-color, 0.14),
+      0 22px 60px 0 rgba(#000000, 0.55);
 
-    entry {
-      @include button;
-      padding: $padding;
-      margin-bottom: $spacing;
-      caret-color: $accent;
+    .search-field {
+      padding: 6px 18px;
 
-      selection {
-        background-color: rgba($accent, 0.4);
+      .search-icon {
+        -gtk-icon-size: 22px;
+        color: rgba($fg-color, 0.5);
+        margin-right: 12px;
+      }
+
+      // The entry has to shed every piece of Adwaita chrome: background,
+      // border, focus ring and min-height. What is left is just the caret and
+      // the text, which is the whole look.
+      entry {
+        background: none;
+        background-image: none;
+        border: none;
+        box-shadow: none;
+        outline: none;
+        padding: 10px 0;
+        min-height: 0;
+        font-size: 26px;
+        font-weight: 300;
+        color: $fg-color;
+        caret-color: $accent;
+
+        &:focus {
+          box-shadow: none;
+          outline: none;
+        }
+
+        selection {
+          background-color: rgba($accent, 0.45);
+        }
+
+        > text > placeholder {
+          color: rgba($fg-color, 0.32);
+        }
       }
     }
 
     separator {
       min-height: 1px;
-      background-color: $hover;
-      margin-bottom: $spacing * 0.5;
+      background-color: rgba($fg-color, 0.12);
+      margin: 0;
+    }
+
+    .results {
+      padding: 6px;
     }
 
     button.app-item {
-      @include button($flat: true);
-      transition: $transition;
-      padding: $padding;
+      background: none;
+      background-image: none;
+      border: none;
+      box-shadow: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      transition: none;
 
-      > box {
-        // icon | name | shortcut hint
-        image {
-          margin-right: $padding;
-          transition: $transition;
-        }
+      image {
+        margin-right: 12px;
       }
 
       label.title {
         color: $fg-color;
-        transition: $transition;
       }
 
-      label.hint {
-        color: $subtle;
+      label.subtitle {
+        color: rgba($fg-color, 0.5);
+        font-size: 0.85em;
       }
 
-      &:hover .title,
-      &:focus .title {
-        color: $accent;
+      // The right-hand "Application" column, as in Spotlight's result rows.
+      label.kind {
+        color: rgba($fg-color, 0.35);
+        font-size: 0.85em;
       }
 
-      &:active {
-        background-color: rgba($accent, 0.4);
-        border-radius: $radii;
+      // Selection follows the keyboard, so hover must not paint a second
+      // highlight that disagrees with it.
+      &:hover {
+        background-color: rgba($fg-color, 0.06);
+      }
 
-        .title {
-          color: $fg-color;
+      &.selected {
+        background-color: $accent;
+
+        label.title,
+        label.subtitle,
+        label.kind {
+          color: $accent-fg;
+        }
+
+        label.subtitle,
+        label.kind {
+          color: rgba($accent-fg, 0.75);
         }
       }
     }
