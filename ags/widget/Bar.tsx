@@ -15,6 +15,7 @@ import AstalNotifd from "gi://AstalNotifd"
 import { For, With, createBinding, onCleanup } from "ags"
 import { createPoll } from "ags/time"
 import SystemStats from "./SystemStats"
+import Tailscale from "./Tailscale"
 
 const WORKSPACE_COUNT = 5
 
@@ -312,6 +313,7 @@ export default function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
         <box $type="end">
           <SystemStats />
           <Tray />
+          <Tailscale />
           <SystemButton />
           <BatteryPill />
           <PowerButton />

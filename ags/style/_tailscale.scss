@@ -1,0 +1,34 @@
+// Tailscale indicator: the icon's colour carries the state.
+@use "./palette" as *;
+
+window#bar .tailscale {
+  .nerd-icon {
+    font-size: 1.05em;
+  }
+
+  .running {
+    color: $green;
+  }
+
+  .login {
+    color: $yellow;
+  }
+
+  .stopped {
+    color: $subtle;
+  }
+
+  .down {
+    color: rgba($red, 0.7);
+  }
+
+  // mid-toggle: waiting on tailscaled
+  .busy {
+    color: $muted;
+    opacity: 0.55;
+  }
+
+  .exit-node {
+    color: $blue;
+  }
+}
