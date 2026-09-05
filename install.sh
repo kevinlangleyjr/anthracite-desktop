@@ -38,6 +38,7 @@ SYSTEM_FILES=(
 	"greetd/config.toml"
 	"pam.d/greetd"
 	"pam.d/polkit-1"
+	"keyd/default.conf"
 )
 
 # If a config dir already exists and is not already our symlink, move it aside
