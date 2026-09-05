@@ -12,3 +12,14 @@ aylurs-gtk-shell-git
 # mpris, notifd, tray, apps). Every widget imports from gi://Astal*, so a
 # missing one is an immediate startup error rather than a degraded feature.
 libastal-meta
+
+# macOS look. WhiteSur is a Big Sur-like GTK theme; the icon and cursor themes
+# match it. Installed stock -- no recolouring -- so the desktop reads as macOS
+# rather than as a themed Linux box.
+whitesur-gtk-theme
+whitesur-icon-theme
+whitesur-cursor-theme-git
+
+# San Francisco and SF Mono, the macOS system and terminal faces. Referenced by
+# the GTK settings.ini files and the Ghostty config.
+apple-fonts

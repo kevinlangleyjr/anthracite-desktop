@@ -129,6 +129,15 @@ for dir in "$REPO_DIR"/.config/*/; do
 	echo "install: ~/.config/$name -> $name" >&2
 done
 
+# mimeapps.list is a file rather than a directory, so the loop above skips it.
+# It is what makes Brave the http/https handler and sends screenshots to Loupe
+# instead of whatever else claims image/png on a fresh machine.
+if [[ -f "$REPO_DIR/.config/mimeapps.list" ]]; then
+	move_existing_to_old "$HOME/.config/mimeapps.list" "$REPO_DIR/.config/mimeapps.list"
+	ln -sf "$REPO_DIR/.config/mimeapps.list" "$HOME/.config/mimeapps.list"
+	echo "install: ~/.config/mimeapps.list -> mimeapps.list" >&2
+fi
+
 #---------------------------------------------------------------------------
 # Per-machine values
 #---------------------------------------------------------------------------
@@ -142,17 +151,42 @@ if [[ -f "$REPO_DIR/.config/hypr/local.lua.example" && ! -e "$REPO_DIR/.config/h
 fi
 
 #---------------------------------------------------------------------------
-# Dark mode
+# Appearance
 #---------------------------------------------------------------------------
 # The GTK settings.ini files arrive via the symlinks above, but the preference
 # apps actually query is the dconf one, which the portal re-exports as
 # org.freedesktop.appearance. It is a binary store, so it cannot be symlinked
 # and has to be set here. Qt reads the same value through the portal — see the
 # QT_QPA_PLATFORMTHEME env in hyprland.lua.
+#
+# These names must match .config/gtk-3.0/settings.ini. GTK3 apps read the ini,
+# but GTK4/libadwaita apps and the portal read dconf, so both have to agree or
+# the desktop ends up half-themed.
 if command -v gsettings >/dev/null 2>&1; then
 	gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-	gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
-	echo "install: dark mode set (color-scheme, gtk-theme)" >&2
+	gsettings set org.gnome.desktop.interface gtk-theme 'WhiteSur-Dark'
+	gsettings set org.gnome.desktop.interface icon-theme 'WhiteSur-dark'
+	gsettings set org.gnome.desktop.interface cursor-theme 'WhiteSur-cursors'
+	gsettings set org.gnome.desktop.interface cursor-size 24
+	gsettings set org.gnome.desktop.interface font-name 'SF Pro Text 11'
+	gsettings set org.gnome.desktop.interface monospace-font-name 'SF Mono 11'
+	gsettings set org.gnome.desktop.interface document-font-name 'SF Pro Text 11'
+	echo "install: appearance set (WhiteSur-Dark, WhiteSur icons/cursors, SF Pro)" >&2
+fi
+
+#---------------------------------------------------------------------------
+# Default applications
+#---------------------------------------------------------------------------
+# "Open in Terminal" resolves through xdg-terminal-exec, which reads this list.
+# Older callers still read the deprecated gsettings key, so set both — Nautilus
+# in particular changed mechanism between releases.
+if [[ ! -e "$HOME/.config/xdg-terminals.list" ]]; then
+	printf 'com.mitchellh.ghostty.desktop\n' >"$HOME/.config/xdg-terminals.list"
+	echo "install: default terminal -> ghostty" >&2
+fi
+if command -v gsettings >/dev/null 2>&1; then
+	gsettings set org.gnome.desktop.default-applications.terminal exec 'ghostty' 2>/dev/null || true
+	gsettings set org.gnome.desktop.default-applications.terminal exec-arg '-e' 2>/dev/null || true
 fi
 
 #---------------------------------------------------------------------------

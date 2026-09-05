@@ -86,6 +86,25 @@ for cmd in ags hyprctl hyprpaper hypridle hyprlock hyprpicker \
 done
 
 echo
+echo "Default applications"
+# hyprland.lua launches ghostty by name, and mimeapps.list points http/https at
+# brave. Both fail quietly: a keybind that does nothing, or a link that opens in
+# whatever else claimed the scheme.
+for pair in "ghostty:terminal" "brave:browser"; do
+	cmd=${pair%%:*}; role=${pair##*:}
+	if command -v "$cmd" >/dev/null 2>&1; then
+		ok "$role -> $cmd"
+	else
+		fail "$cmd not on PATH — the $role keybind/handler will do nothing"
+	fi
+done
+if [[ -L "$HOME/.config/mimeapps.list" ]]; then
+	ok "mimeapps.list linked"
+else
+	warn "~/.config/mimeapps.list is not linked into this repo"
+fi
+
+echo
 echo "System files"
 for rel in "greetd/config.toml" "pam.d/greetd" "pam.d/polkit-1" "keyd/default.conf"; do
 	repo_file="$REPO_DIR/etc/$rel"

@@ -7,7 +7,7 @@
 ---- MY PROGRAMS ----
 ---------------------
 
-local terminal    = "kitty"
+local terminal    = "ghostty"
 local fileManager = "nautilus"
 local menu        = "ags toggle launcher"
 
@@ -39,6 +39,13 @@ end)
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
+-- Cursor theme. GTK reads this from settings.ini, but Hyprland draws the
+-- cursor itself over anything that isn't a GTK surface -- the desktop, the
+-- lock screen, XWayland clients -- so it has to be told separately or the
+-- pointer changes shape as it crosses windows.
+hl.env("XCURSOR_THEME", "WhiteSur-cursors")
+hl.env("HYPRCURSOR_THEME", "WhiteSur-cursors")
+
 -- Dark mode. GTK apps read it from gsettings (color-scheme = prefer-dark) and
 -- the GTK3 settings.ini; Qt has no such setting of its own, so point it at the
 -- xdg-desktop-portal theme plugin, which re-exports that same preference.
@@ -54,12 +61,14 @@ hl.config({
         gaps_in  = 5,
         gaps_out = 20,
 
-        border_size = 2,
+        -- macOS draws no accent border at all: a focused window is told apart
+        -- by its shadow, not a coloured outline. A hairline edge is kept only
+        -- so adjacent dark windows don't visually merge.
+        border_size = 1,
 
-        -- Slatewave: teal→sky gradient on focus, slate line when inactive
         col = {
-            active_border   = { colors = {"rgba(5eead4ee)", "rgba(38bdf8ee)"}, angle = 45 },
-            inactive_border = "rgba(475569aa)",
+            active_border   = "rgba(ffffff26)",
+            inactive_border = "rgba(00000040)",
         },
 
         resize_on_border = false,
@@ -69,24 +78,32 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 12, -- match the AGS shell's radii token
+        rounding       = 10, -- Big Sur window radius
         rounding_power = 2,
 
         active_opacity   = 1.0,
         inactive_opacity = 1.0,
 
+        -- The shadow is what separates a macOS window from the desktop, and it
+        -- is far larger and softer than the Hyprland default: a wide, low-alpha
+        -- pool offset downward, rather than a tight dark ring.
         shadow = {
             enabled      = true,
-            range        = 4,
+            range        = 30,
             render_power = 3,
-            color        = 0xee1a1a1a,
+            offset       = "0 8",
+            color        = 0x40000000,
         },
 
+        -- Frosted-glass surfaces. macOS blurs heavily and then lifts saturation
+        -- behind the glass, which is what vibrancy does here.
         blur = {
-            enabled   = true,
-            size      = 3,
-            passes    = 1,
-            vibrancy  = 0.1696,
+            enabled            = true,
+            size               = 8,
+            passes             = 3,
+            new_optimizations  = true,
+            vibrancy           = 0.4,
+            vibrancy_darkness  = 0.2,
         },
     },
 

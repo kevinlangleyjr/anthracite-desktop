@@ -1,0 +1,29 @@
+# Ghostty — macOS Terminal.app proportions and colours.
+#
+# "Apple System Colors" ships with Ghostty and is the actual macOS system
+# palette, so it matches the WhiteSur GTK theme without hand-picked hexes.
+theme = "Apple System Colors"
+
+# SF Mono is macOS's terminal face, from the apple-fonts package. The Nerd Font
+# is listed after it as a fallback so powerline and icon glyphs still resolve —
+# SF Mono has no such coverage, and the shell prompt leans on it heavily.
+font-family = "SF Mono"
+font-family = "JetBrainsMono Nerd Font"
+font-size = 13
+
+# macOS defaults: block cursor, no blink.
+cursor-style = block
+cursor-style-blink = false
+
+# Terminal.app sits at roughly 92% with the desktop blurred behind it.
+background-opacity = 0.92
+background-blur = true
+
+# Terminal.app leaves noticeably more breathing room than Ghostty's 2px.
+window-padding-x = 12
+window-padding-y = 10
+
+# Let the compositor and GTK theme draw the frame, so windows pick up the
+# WhiteSur titlebar and match every other app.
+window-decoration = auto
+window-theme = auto
