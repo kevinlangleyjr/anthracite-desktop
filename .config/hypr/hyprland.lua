@@ -320,6 +320,11 @@ local home = os.getenv("HOME") or ""
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(home .. "/.config/hypr/clipboard.sh"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a -n -f hex"))
 
+-- Emoji picker. macOS puts this on Ctrl+Cmd+Space, which is the same physical
+-- chord on this keyboard -- so once the keyd layer lands and the key beside the
+-- spacebar starts emitting Super, this bind has to become CTRL + SUPER + space.
+hl.bind("CTRL + ALT + space", hl.dsp.exec_cmd("smile"))
+
 hl.bind(mainMod .. " + SHIFT + R",        hl.dsp.exec_cmd(home .. "/.config/hypr/record.sh screen"))
 hl.bind(mainMod .. " + CTRL + SHIFT + R", hl.dsp.exec_cmd(home .. "/.config/hypr/record.sh region"))
 
