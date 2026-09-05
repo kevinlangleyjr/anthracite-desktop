@@ -12,7 +12,7 @@ import AstalHyprland from "gi://AstalHyprland"
 // reading the list — the clock restarts on every Tab press.
 const STUCK_COMMIT_MS = 3000
 
-type Entry = { address: string; cls: string; title: string; icon: string }
+type Entry = { address: string; cls: string; name: string; title: string; icon: string }
 type View = { entries: Entry[]; index: number }
 
 // Assigned when the widget is constructed so app.tsx's requestHandler can
@@ -43,6 +43,21 @@ export default function WindowSwitcher() {
   // only resolve through the app database. Try the theme first, then fall
   // back to a fuzzy desktop-entry match on the trimmed class.
   let theme: Gtk.IconTheme | null = null
+  // The class is a machine name ("com.mitchellh.ghostty", "Brave-browser");
+  // macOS shows the application's display name. Classes split on both dots and
+  // dashes, so try each form against the app database before giving up and
+  // prettifying the class itself — otherwise Brave reads as "Brave-browser".
+  function nameFor(cls: string) {
+    const base = cls.split(".").pop() || cls
+    const head = base.split("-")[0]
+    for (const candidate of [cls, base, head]) {
+      if (!candidate) continue
+      const [match] = apps.fuzzy_query(candidate)
+      if (match?.name) return match.name
+    }
+    return head.replace(/^./, (c) => c.toUpperCase())
+  }
+
   function iconFor(cls: string) {
     theme ??= Gtk.IconTheme.get_for_display(Gdk.Display.get_default()!)
 
@@ -83,6 +98,7 @@ export default function WindowSwitcher() {
     entries = list.map((c: any) => ({
       address: c.address,
       cls: c.initialClass || c.class || "window",
+      name: nameFor(c.initialClass || c.class || "window"),
       title: c.title || c.class || "",
       icon: iconFor(c.initialClass || c.class || ""),
     }))
@@ -152,31 +168,38 @@ export default function WindowSwitcher() {
       >
         <With value={view}>
           {(v) => (
-            <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
-              {v.entries.map((entry, i) => (
-                <box
-                  class={
-                    i === v.index ? "switcher-entry selected" : "switcher-entry"
-                  }
-                  spacing={12}
-                >
-                  <image iconName={entry.icon} pixelSize={40} />
+            <box orientation={Gtk.Orientation.VERTICAL}>
+              <box class="switcher-row" spacing={6} halign={Gtk.Align.CENTER}>
+                {v.entries.map((entry, i) => (
                   <box
-                    orientation={Gtk.Orientation.VERTICAL}
-                    valign={Gtk.Align.CENTER}
-                    hexpand
+                    class={
+                      i === v.index ? "switcher-tile selected" : "switcher-tile"
+                    }
                   >
-                    <label class="switcher-class" xalign={0} label={entry.cls} />
-                    <label
-                      class="switcher-title"
-                      xalign={0}
-                      maxWidthChars={44}
-                      ellipsize={Pango.EllipsizeMode.END}
-                      label={entry.title}
-                    />
+                    <image iconName={entry.icon} pixelSize={64} />
                   </box>
-                </box>
-              ))}
+                ))}
+              </box>
+              {/* macOS names only the highlighted app, centred beneath the row.
+                  The window title is kept as a second line because this list is
+                  per-window, so two windows of one app are otherwise identical
+                  tiles with no way to tell them apart. */}
+              <label
+                class="switcher-name"
+                halign={Gtk.Align.CENTER}
+                label={v.entries[v.index]?.name ?? ""}
+              />
+              <label
+                class="switcher-title"
+                halign={Gtk.Align.CENTER}
+                maxWidthChars={54}
+                ellipsize={Pango.EllipsizeMode.END}
+                visible={
+                  (v.entries[v.index]?.title ?? "") !==
+                  (v.entries[v.index]?.name ?? "")
+                }
+                label={v.entries[v.index]?.title ?? ""}
+              />
             </box>
           )}
         </With>
