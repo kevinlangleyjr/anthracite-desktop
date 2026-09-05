@@ -64,32 +64,32 @@ function Notification({ notification: n }: { notification: AstalNotifd.Notificat
       <box
         orientation={Gtk.Orientation.VERTICAL}
         spacing={6}
-        widthRequest={380}
+        widthRequest={356}
       >
         <box spacing={6}>
           {(n.image && fileExists(n.image) && (
-            <image valign={Gtk.Align.START} class="icon" file={n.image} pixelSize={48} />
+            <image valign={Gtk.Align.START} class="icon" file={n.image} pixelSize={40} />
           )) ||
             (n.image && isIcon(n.image) && (
-              <image valign={Gtk.Align.START} class="icon" iconName={n.image} pixelSize={48} />
+              <image valign={Gtk.Align.START} class="icon" iconName={n.image} pixelSize={40} />
             )) ||
             (isIcon(n.appIcon || n.desktopEntry) && (
               <image
                 valign={Gtk.Align.START}
                 class="icon"
                 iconName={n.appIcon || n.desktopEntry}
-                pixelSize={48}
+                pixelSize={40}
               />
             ))}
           <box orientation={Gtk.Orientation.VERTICAL} hexpand>
             <box spacing={6}>
               <label
-                class="title"
+                class="app-name"
                 halign={Gtk.Align.START}
                 xalign={0}
                 hexpand
                 ellipsize={Pango.EllipsizeMode.END}
-                label={n.summary || n.appName || "Notification"}
+                label={n.appName || "Notification"}
               />
               <label class="time" label={formatTime(n.time)} />
               <button
@@ -100,6 +100,13 @@ function Notification({ notification: n }: { notification: AstalNotifd.Notificat
                 <image iconName="window-close-symbolic" />
               </button>
             </box>
+            <label
+              class="title"
+              halign={Gtk.Align.START}
+              xalign={0}
+              ellipsize={Pango.EllipsizeMode.END}
+              label={n.summary || n.appName || "Notification"}
+            />
             {n.body && (
               <label
                 class="description"
