@@ -1,58 +1,61 @@
-# Slatewave Space — AGS desktop shell
+# Anthracite — AGS desktop shell
 
-A recreation of the layout from [Aylur's ags-pre-ts "Space" theme](https://github.com/Aylur/dotfiles/tree/ags-pre-ts)
-on the current, maintained stack (AGS v3 / Astal / GTK4), themed with the
-Slatewave palette. Components: top bar, app launcher, quick settings, power
-menu with confirmation, notification popups, volume OSD, system stats, and a
-bottom dock.
+The macOS-shaped shell for [Anthracite](../../README.md), built on AGS v3 /
+Astal / GTK4: menu bar, dock, Spotlight, Control Center,  menu, window
+switcher, notification cards, volume OSD and a system stats readout.
 
-The Slatewave color tokens live in `style/_palette.scss`. The wallpaper
-(`assets/slatewave-space.png`, source SVG alongside) is a custom flat space
-scene in the same palette.
+Colours are Apple's dark-appearance system palette, in
+[`style/_palette.scss`](style/_palette.scss). Every other partial consumes those
+tokens, so recolouring the whole shell is that one file and nothing else.
 
 ## Install (Arch)
 
 ```sh
 paru -S aylurs-gtk-shell-git libastal-meta dart-sass \
-        brightnessctl ttf-jetbrains-mono-nerd
+        apple-fonts ttf-jetbrains-mono-nerd brightnessctl
 ```
 
-- `aylurs-gtk-shell-git` — the `ags` CLI/runtime (v3+ required)
-- `libastal-meta` — Astal service libraries (hyprland, battery, network,
-  bluetooth, wireplumber, mpris, notifd, tray, apps)
-- `dart-sass` — compiles `style.scss` at launch
-- `brightnessctl` — brightness slider in quick settings
-- Nerd Font — the launcher glyph in the bar
+- `aylurs-gtk-shell-git` — the `ags` CLI and runtime (v3+)
+- `libastal-meta` — the Astal service libraries every widget imports from
+  (hyprland, battery, network, bluetooth, wireplumber, mpris, notifd, tray, apps)
+- `dart-sass` — compiles `style.scss` at launch, so the shell starts unstyled
+  without it
+- `apple-fonts` — SF Pro Text, the UI face, and the SF glyph U+F8FF the  menu
+  needs; no Nerd Font has it
+- Nerd Font — the stats and dock glyphs
+- `brightnessctl` — the Display slider in Control Center
 
-This directory is symlinked to `~/.config/ags` by the dotfiles installer, so:
+The parent installer symlinks this directory to `~/.config/ags`, so:
 
 ```sh
 ags run            # start the shell
 ags quit           # stop it
-ags types          # (optional) generate @girs types for editor support
+ags bundle app.tsx /tmp/out   # typecheck without touching a running instance
+ags types -u       # regenerate @girs types after an AGS upgrade
 ```
 
-## Hyprland wiring (hyprland.lua)
+`ags bundle` is the only way to check a change compiles without restarting the
+running shell — useful when the desktop you are editing is the one you are
+using.
+
+## Hyprland wiring
+
+Autostart and binds live in [`../hypr/hyprland.lua`](../hypr/hyprland.lua):
 
 ```lua
-hl.on("hyprland.start", function()
-    hl.exec_cmd("ags run")
-    hl.exec_cmd("hyprpaper")
-end)
+hl.on("hyprland.start", function() hl.exec_cmd("ags run") end)
 
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("ags toggle launcher"))
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("ags toggle quicksettings"))
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("ags toggle powermenu"))
 ```
 
-Wallpaper — `~/.config/hypr/hyprpaper.conf`:
-
-```
-preload = ~/.config/ags/assets/slatewave-space.png
-wallpaper = , ~/.config/ags/assets/slatewave-space.png
-```
-
-Since the shell draws its own bar, disable waybar's `exec-once` if present.
+Every surface here is translucent and depends on the compositor blurring behind
+it. `hyprland.lua` carries a `hl.layer_rule` per namespace; without them the
+alpha reads as flat grey and you can see straight through the menu bar. The
+`ignore_alpha` threshold matters as much as `blur` — the launcher is a
+fullscreen layer with a transparent background, so blurring it unconditionally
+frosts the entire desktop instead of the panel drawn on it.
 
 ## Toggleable windows
 
@@ -61,25 +64,29 @@ Since the shell draws its own bar, disable waybar's `exec-once` if present.
 
 ## Tweaks
 
-- Dock pinned apps: `PINNED` in `widget/Dock.tsx`
+- Dock pins: `PINNED` in `widget/Dock.tsx` — desktop entry ids, not display
+  names, since fuzzy-matching "files" or "brave" is ambiguous
+- Dock magnification: `MAGNIFY` and the falloff radius in `widget/Dock.tsx`
 - Workspace count: `WORKSPACE_COUNT` in `widget/Bar.tsx`
 - Power actions: `ACTIONS` in `widget/PowerMenu.tsx`
-- Stats poll rates / process count: constants at the top of
-  `widget/SystemStats.tsx` (`POLL`, `PROC_POLL`, `DISK_POLL`, `TOP_PROCS`)
-- All colors: `style/_palette.scss`
+- Stats poll rates: constants at the top of `widget/SystemStats.tsx`
+- OSD segment count: `SEGMENTS` in `widget/OSD.tsx`
 
-## Troubleshooting (first boot)
+## Notes
 
-This config was written against the AGS v3.1 API without a live test
-environment, so expect the possibility of small API drift:
+- **The switcher orders by recency, not creation.** That is what makes
+  press-and-release toggle between the last two windows. It also has to
+  normalise addresses: hyprctl reports them bare, AstalHyprland includes the
+  `0x` prefix, and unmatched addresses silently fall back to creation order.
+- **GTK4 CSS has no `max-height`** and does not animate `pixelSize`. The dock's
+  magnification is driven by a tick callback rather than a transition.
+- **The  glyph is U+F8FF**, an Apple private-use codepoint present only in the
+  SF faces, so it must not inherit the Nerd Font stack.
 
-- `ags run` prints TS/JSX errors with file:line — most likely suspects are
-  property names on Astal service objects. `ags types` regenerates GIR
-  typings; the [AGS docs](https://aylur.github.io/ags/) and
-  `/usr/share/ags` examples are the reference.
-- If a window doesn't toggle, check `ags list` (window must be registered
-  with its `name` and `application`).
-- Bluetooth toggle shells out to `bluetoothctl`; make sure `bluez` and
-  `bluez-utils` are installed and the service is enabled.
-- The bar expects Hyprland (AstalHyprland); it won't run under another
+## Troubleshooting
+
+- `ags run` in a terminal prints the TS/JSX errors the autostart swallows.
+- If a window will not toggle, check `ags list` — it must be registered with
+  its `name`.
+- The bar expects Hyprland via AstalHyprland; it will not run under another
   compositor.
