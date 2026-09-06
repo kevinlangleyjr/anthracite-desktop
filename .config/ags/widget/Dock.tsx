@@ -78,11 +78,49 @@ export default function Dock() {
     return application ? { id, app: application } : null
   }).filter((e) => e !== null)
 
-  // Hyprland reports a window class; match it loosely against the entry id so
-  // "brave-browser" still matches a "Brave-browser" client.
-  function isRunning(cs: AstalHyprland.Client[], id: string) {
+  // Match a window class against a pin's entry id. The comparison has to run
+  // both ways: "com.mitchellh.ghostty" contains "ghostty", but VSCodium reports
+  // a class of "codium" which is *shorter* than the "vscodium" entry id, so a
+  // one-directional check never matched it and it never showed a running dot.
+  function matches(cls: string | null, id: string) {
     const key = (id.split(".").pop() ?? id).toLowerCase()
-    return cs.some((c) => (c.class ?? "").toLowerCase().includes(key))
+    const c = (cls ?? "").toLowerCase()
+    if (!c) return false
+    // The reverse direction needs a length floor, or a two-character class
+    // would match almost any id.
+    return c.includes(key) || (c.length > 2 && key.includes(c))
+  }
+
+  function isRunning(cs: AstalHyprland.Client[], id: string) {
+    return cs.some((c) => matches(c.class, id))
+  }
+
+  // Clicking a dock icon focuses the app's most recently used window, and only
+  // launches when it has none — the macOS behaviour. Read through hyprctl's
+  // JSON rather than the client objects: focusHistoryID is not exposed on the
+  // GObject, and it is what supplies "most recent" without this widget having
+  // to track focus changes the way the switcher does.
+  function activate(id: string, application: AstalApps.Application) {
+    let windows: any[] = []
+    try {
+      windows = JSON.parse(hypr.message("j/clients"))
+        .filter((c: any) => c.mapped && !c.hidden && matches(c.class, id))
+        .sort((a: any, b: any) => a.focusHistoryID - b.focusHistoryID)
+    } catch (e) {
+      console.error(e)
+    }
+
+    const top = windows[0]
+    if (!top) {
+      application.launch()
+      return
+    }
+
+    const addr = top.address.startsWith("0x") ? top.address : `0x${top.address}`
+    // Hyprland 0.56 parses dispatch payloads as Lua, so the bare
+    // `focuswindow address:…` form silently does nothing. Focusing a window on
+    // another workspace switches to it, which is what the dock should do.
+    hypr.message(`dispatch hl.dsp.focus({ window = "address:${addr}" })`)
   }
 
   const items: Item[] = []
@@ -220,7 +258,7 @@ export default function Dock() {
               <button
                 class="dock-item"
                 tooltipText={application.name}
-                onClicked={() => application.launch()}
+                onClicked={() => activate(id, application)}
               >
                 <box orientation={Gtk.Orientation.VERTICAL}>
                   {/* The icon overlays a slot rather than being laid out
