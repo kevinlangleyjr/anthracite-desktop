@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/icon.png" alt="" width="128">
+
 # Anthracite
 
 A macOS-shaped [Hyprland](https://hypr.land) desktop for a ThinkPad X1 Carbon — compositor, shell, lock screen and login, on Apple's dark system palette.
