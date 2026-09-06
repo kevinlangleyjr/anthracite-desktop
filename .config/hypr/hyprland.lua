@@ -302,6 +302,11 @@ for i = 1, 10 do
     hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
 end
 
+-- Send the focused window to the lowest-numbered empty workspace. "empty"
+-- reuses a gap left by a closed workspace; "emptyn" would always climb to the
+-- next number above the current one instead.
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.window.move({ workspace = "empty" }))
+
 -- Scratchpad
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
