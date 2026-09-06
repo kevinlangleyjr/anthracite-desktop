@@ -189,6 +189,19 @@ if command -v gsettings >/dev/null 2>&1; then
 	gsettings set org.gnome.desktop.default-applications.terminal exec-arg '-e' 2>/dev/null || true
 fi
 
+# Show dotfiles everywhere. A deliberate departure from macOS, which hides them
+# until you press Cmd+Shift+period — but most of the interesting directories on
+# this machine start with a dot.
+#
+# Three separate keys, because the file manager and the Open/Save dialogs do not
+# share this preference, and the dialogs keep their own GTK3 and GTK4 copies.
+# Setting only one of the three is what makes this look half-applied.
+if command -v gsettings >/dev/null 2>&1; then
+	gsettings set org.gnome.nautilus.preferences show-hidden-files true 2>/dev/null || true
+	gsettings set org.gtk.Settings.FileChooser show-hidden true 2>/dev/null || true
+	gsettings set org.gtk.gtk4.Settings.FileChooser show-hidden true 2>/dev/null || true
+fi
+
 #---------------------------------------------------------------------------
 # System files
 #---------------------------------------------------------------------------
