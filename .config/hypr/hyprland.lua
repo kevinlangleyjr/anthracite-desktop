@@ -71,7 +71,12 @@ hl.config({
             inactive_border = "rgba(00000040)",
         },
 
-        resize_on_border = false,
+        -- macOS resizes by dragging any edge or corner, and with every window
+        -- floating here that is the natural gesture. The border itself is a
+        -- hairline, so the grab area is widened well past it — otherwise you
+        -- would be aiming at a single pixel.
+        resize_on_border = true,
+        extend_border_grab_area = 15,
         allow_tearing = false,
 
         layout = "dwindle",
