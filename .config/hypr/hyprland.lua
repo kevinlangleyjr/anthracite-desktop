@@ -280,7 +280,28 @@ end)
 -- AGS shell windows (SUPER+M replaces the example's raw exit — the
 -- powermenu's Log Out does the same via confirmation)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("ags toggle quicksettings"))
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("ags toggle powermenu"))
+-- Minimise, on macOS's Cmd+M. Hyprland models no such state, so the window is
+-- parked on a special workspace: still running and mapped, just not on a
+-- workspace you can navigate to. The dock lists what is parked and is the only
+-- way back, which is how the macOS Dock behaves too.
+--
+-- Moving a window to a special workspace also *reveals* that workspace, so it
+-- has to be toggled shut again or minimising would leave the window on screen
+-- as an overlay.
+hl.bind(mainMod .. " + M", function()
+    local win = hl.get_active_window()
+    if not win then return end
+
+    hl.dispatch(hl.dsp.window.move({
+        workspace = "special:minimized",
+        window    = "address:" .. win.address,
+    }))
+    hl.dispatch(hl.dsp.workspace.toggle_special("minimized"))
+end)
+
+-- The  menu moves off SUPER+M to make room for it. macOS has no shortcut for
+-- that menu at all — it is a click target — so this is only a convenience.
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("ags toggle powermenu"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
 
 -- Move focus with mainMod + arrow keys

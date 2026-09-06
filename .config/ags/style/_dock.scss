@@ -23,6 +23,13 @@ window#dock {
       inset 0 0 0 1px rgba($fg-color, 0.14),
       0 10px 28px 0 rgba(#000000, 0.5);
 
+    // Divides the pinned apps from minimised windows, as the macOS Dock does.
+    .dock-separator {
+      min-width: 1px;
+      background-color: rgba($fg-color, 0.22);
+      margin: 8px 5px 10px 5px;
+    }
+
     button.dock-item {
       background: none;
       background-image: none;

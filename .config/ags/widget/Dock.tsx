@@ -1,7 +1,8 @@
 import app from "ags/gtk4/app"
-import { createBinding } from "ags"
+import { For, createBinding } from "ags"
+import { createPoll } from "ags/time"
 import GLib from "gi://GLib"
-import { Astal, Gtk } from "ags/gtk4"
+import { Astal, Gtk, Gdk } from "ags/gtk4"
 import AstalApps from "gi://AstalApps"
 import AstalHyprland from "gi://AstalHyprland"
 
@@ -18,6 +19,12 @@ const PINNED = [
 ]
 
 const ICON_SIZE = 40
+
+// Hyprland has no minimise concept, so a minimised window is parked on this
+// special workspace: still mapped and running, just not on any workspace you
+// can navigate to. The dock is the only way back, which is exactly how the
+// macOS Dock behaves.
+const MINIMIZED_WS = "special:minimized"
 
 // macOS magnifies the icon under the pointer and falls the effect off across
 // its neighbours — that spreading is the part that reads as "the macOS dock"
@@ -95,11 +102,66 @@ export default function Dock() {
     return cs.some((c) => matches(c.class, id))
   }
 
+  // Minimised entries are windows, not pins, so their icon has to come from a
+  // class rather than a desktop entry. Classes name icons inconsistently:
+  // "kitty" is an icon-theme name as-is, "com.mitchellh.ghostty" needs its last
+  // segment, and "codium" only resolves through the app database.
+  let theme: Gtk.IconTheme | null = null
+  function iconForClass(cls: string | null) {
+    theme ??= Gtk.IconTheme.get_for_display(Gdk.Display.get_default()!)
+    const raw = cls ?? ""
+    for (const name of [raw, raw.split(".").pop() ?? raw, raw.split("-")[0]]) {
+      for (const candidate of [name, name.toLowerCase()]) {
+        if (candidate && theme.has_icon(candidate)) return candidate
+      }
+      const [match] = apps.fuzzy_query(name)
+      if (match?.iconName) return match.iconName
+    }
+    return "application-x-executable"
+  }
+
+  // Windows parked on the minimised workspace.
+  //
+  // Polled rather than derived from the clients binding: minimising does not
+  // add or remove a client, it changes one client's workspace, and the list
+  // binding only fires when the list itself changes. The previous array is
+  // returned unchanged when the set is the same, so <For> is not torn down and
+  // rebuilt four times a second.
+  let lastKey = ""
+  let lastList: AstalHyprland.Client[] = []
+  const minimized = createPoll(lastList, 400, () => {
+    const list = hypr
+      .get_clients()
+      .filter((c) => c.workspace?.name === MINIMIZED_WS)
+    const key = list.map((c) => c.address).join(",")
+    if (key === lastKey) return lastList
+    lastKey = key
+    lastList = list
+    return list
+  })
+
+  // Bring a minimised window back to whichever workspace is in front now,
+  // rather than the one it was minimised from — the window follows you, which
+  // is what clicking a Dock icon does on macOS.
+  function restore(client: AstalHyprland.Client) {
+    const ws = hypr.focusedWorkspace?.id
+    const addr = client.address.startsWith("0x")
+      ? client.address
+      : `0x${client.address}`
+    if (ws !== undefined) {
+      hypr.message(
+        `dispatch hl.dsp.window.move({ workspace = ${ws}, window = "address:${addr}" })`,
+      )
+    }
+    hypr.message(`dispatch hl.dsp.focus({ window = "address:${addr}" })`)
+  }
+
   // Clicking a dock icon focuses the app's most recently used window, and only
-  // launches when it has none — the macOS behaviour. Read through hyprctl's
-  // JSON rather than the client objects: focusHistoryID is not exposed on the
-  // GObject, and it is what supplies "most recent" without this widget having
-  // to track focus changes the way the switcher does.
+  // launches when it has none — the macOS behaviour. Recency comes from
+  // Hyprland's own focus history, so this widget does not have to track focus
+  // changes the way the switcher does. Read through hyprctl's JSON because it
+  // is a single consistent snapshot; the same value is on the GObject as
+  // focus-history-id if a binding is ever wanted instead.
   function activate(id: string, application: AstalApps.Application) {
     let windows: any[] = []
     try {
@@ -203,6 +265,22 @@ export default function Dock() {
     })
   }
 
+  // The row's geometry is measured once while everything is at rest. Anything
+  // that changes the row's width — a window being minimised or restored —
+  // invalidates that, and re-measuring the already-spread layout would feed the
+  // geometry back into itself. So reset to rest first, then let the next
+  // pointer event measure again.
+  function invalidate() {
+    centers = null
+    if (reserve) reserve.widthRequest = -1
+    for (const item of items) {
+      item.scale = 1
+      item.target = 1
+      if (item.icon) item.icon.pixelSize = ICON_SIZE
+      if (item.slot) item.slot.widthRequest = ICON_SIZE
+    }
+  }
+
   function track(x: number | null) {
     if (relax) {
       GLib.source_remove(relax)
@@ -290,6 +368,43 @@ export default function Dock() {
               </button>
             )
           })}
+
+          {/* macOS keeps minimised windows at the far end of the Dock behind a
+              separator. These deliberately do not magnify: the pinned row's
+              falloff is computed from centres measured once, and a section that
+              changes length would have to re-measure mid-gesture. */}
+          <box
+            class="dock-separator"
+            visible={minimized((ms) => ms.length > 0)}
+          />
+          <box spacing={4} $={() => invalidate()}>
+            <For each={minimized}>
+              {(client) => (
+                <button
+                  class="dock-item minimized"
+                  tooltipText={createBinding(client, "title")((t) => t ?? "")}
+                  onClicked={() => restore(client)}
+                >
+                  <box orientation={Gtk.Orientation.VERTICAL}>
+                    <overlay class="icon-slot">
+                      <box
+                        widthRequest={ICON_SIZE}
+                        heightRequest={ICON_SIZE}
+                      />
+                      <image
+                        $type="overlay"
+                        valign={Gtk.Align.END}
+                        halign={Gtk.Align.CENTER}
+                        iconName={iconForClass(client.class)}
+                        pixelSize={ICON_SIZE}
+                      />
+                    </overlay>
+                    <box halign={Gtk.Align.CENTER} class="indicator minimized" />
+                  </box>
+                </button>
+              )}
+            </For>
+          </box>
         </box>
       </box>
     </window>
