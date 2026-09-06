@@ -142,14 +142,13 @@ Then set your monitors in `.config/hypr/local.lua` and reboot into the session.
 
 ## System files
 
-Four files outside `$HOME` are part of this setup. Two are modified package files, one is owned by no package at all, and one is opt-in.
+Three files outside `$HOME` are part of this setup. Two are modified package files; one is owned by no package at all.
 
 | Tracked copy             | Why it matters                                                                                            |
 | ------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `etc/greetd/config.toml` | The `tuigreet --cmd start-hyprland` line. This is how the session launches at all.                          |
 | `etc/pam.d/greetd`       | The two `pam_gnome_keyring` lines. Without them the keyring never unlocks and the Secret Service is dead.   |
 | `etc/pam.d/polkit-1`     | Owned by **no package**. Puts `pam_fprintd.so` ahead of the stack for fingerprint auth on privilege prompts. |
-| `etc/keyd/default.conf`  | The macOS key layer — see [Keyboard](#keyboard). Inert until `keyd` is installed.                          |
 
 ```sh
 ./install.sh --system     # sudo; backs up each file as <name>.bak-<timestamp>
@@ -179,13 +178,27 @@ The login user needs `wheel` and nothing else. Device access comes from logind's
 
 ## Keyboard
 
-`etc/keyd/default.conf` remaps the bottom row to `Ctrl | Option | Cmd | Space`, making the key beside the spacebar act as Control for applications — so `Cmd`+`C`, `Cmd`+`Q`, `Cmd`+`W` work everywhere without per-app configuration. Physical Ctrl is untouched, so `Ctrl`+`C` in a terminal is still SIGINT, as on a Mac.
+**The keyboard is deliberately not macOS-like.** Shortcuts are Linux-native:
+`Ctrl` is the application modifier, and `SUPER` belongs to the compositor.
 
-Hyprland can rebind its own shortcuts but cannot change what a key sends to an application, which is why this needs a layer underneath it.
+The obvious thing to try is a `keyd` layer making the key beside the spacebar
+act as Control, so `Cmd`+`C`, `Cmd`+`S` and `Cmd`+`Q` work everywhere without
+per-app configuration. It was built, and then rejected, for a reason worth
+recording so it does not get rebuilt:
 
-> **Not enabled yet.** The config is written but `keyd` is not installed, and enabling it requires two matching changes: the switcher watches raw Alt keycodes to know when to commit, and the emoji picker binding moves to `CTRL + SUPER + space`.
+**`keyd` is app-agnostic.** It cannot tell a terminal from a browser, so
+mapping Cmd onto Control maps it there too — and `Ctrl`+`C` in a terminal is
+SIGINT. macOS keeps these separate: Terminal.app has `Cmd`+`C` for copy *and*
+`Ctrl`+`C` for interrupt, at the same time, because they are genuinely
+different keys. Collapsing both onto Control means the most reflexive shortcut
+on the platform kills the running process instead of copying. There is no fix
+at that layer; the compositor knows which window is focused, and the input
+remapper does not.
 
----
+Against that, the upside — Cmd chords feeling right in GUI apps — did not
+justify a root-level input layer whose failure mode is recovering from a TTY.
+
+Everything else here imitates macOS. The keyboard is where the imitation stops.
 
 ## Keybindings
 

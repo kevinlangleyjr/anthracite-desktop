@@ -94,13 +94,6 @@ nautilus
 loupe
 papers
 
-# --- Keyboard -------------------------------------------------------------
-# keyd applies the macOS key layer in etc/keyd/default.conf: the key beside
-# the spacebar becomes Cmd and acts as Control for applications, so Cmd+C and
-# friends work everywhere. Hyprland cannot do this itself — it can rebind its
-# own shortcuts but not change what a key sends to an app.
-keyd
-
 # --- Toolkit and theming --------------------------------------------------
 qt5-wayland
 qt6-wayland

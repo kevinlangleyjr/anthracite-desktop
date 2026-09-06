@@ -106,15 +106,9 @@ fi
 
 echo
 echo "System files"
-for rel in "greetd/config.toml" "pam.d/greetd" "pam.d/polkit-1" "keyd/default.conf"; do
+for rel in "greetd/config.toml" "pam.d/greetd" "pam.d/polkit-1"; do
 	repo_file="$REPO_DIR/etc/$rel"
 	live_file="/etc/$rel"
-	# The keyd layer is opt-in: until keyd is installed there is nothing to
-	# apply the config to, so a missing file is expected rather than broken.
-	if [[ "$rel" == keyd/* ]] && ! command -v keyd >/dev/null 2>&1; then
-		warn "keyd not installed — the macOS key layer is not active"
-		continue
-	fi
 	if [[ ! -r "$live_file" ]]; then
 		fail "/etc/$rel missing or unreadable"
 	elif cmp -s "$repo_file" "$live_file"; then
