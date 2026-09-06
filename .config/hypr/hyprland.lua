@@ -1,4 +1,4 @@
--- Hyprland config — Slatewave Space
+-- Hyprland config — Anthracite
 -- Based on the Hyprland 0.56 shipped example, wired for the AGS shell in
 -- ~/.config/ags (bar, launcher, quicksettings, powermenu, OSD, dock).
 -- Per-machine values (monitors, host env) live in local.lua — see the end.

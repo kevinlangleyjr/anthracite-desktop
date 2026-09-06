@@ -1,4 +1,4 @@
-# Official-repo packages for the Slatewave Hyprland desktop.
+# Official-repo packages for the Anthracite Hyprland desktop.
 # install.sh feeds these to `pacman -S --needed`. AUR packages are in
 # packages-aur.txt.
 #

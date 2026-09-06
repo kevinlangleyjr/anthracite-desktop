@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# doctor.sh — verify the Slatewave Desktop install is wired up correctly.
+# doctor.sh — verify the Anthracite install is wired up correctly.
 # Exits non-zero if any required check fails. Optional checks emit warnings.
 #
 # dotfiles-doctor calls this automatically when the repo is present.

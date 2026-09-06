@@ -1,4 +1,4 @@
-# AUR packages for the Slatewave Hyprland desktop.
+# AUR packages for the Anthracite Hyprland desktop.
 # install.sh feeds these to whichever of paru / yay is present. Neither has a
 # repo equivalent, and without both there is no shell at all.
 

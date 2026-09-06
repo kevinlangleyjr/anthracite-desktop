@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Slatewave Desktop installer
+# Anthracite installer
 #
 # Links the Hyprland/AGS config into ~/.config, installs the packages the
 # session needs, and reports drift between the tracked etc/ copies and the
@@ -235,7 +235,7 @@ fi
 
 cat <<'EOF'
 
-Slatewave Desktop linked.
+Anthracite linked.
 
 Next:
   1. Set your monitors in .config/hypr/local.lua
