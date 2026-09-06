@@ -366,16 +366,66 @@ hl.window_rule({
     suppress_event = "maximize",
 })
 
--- Everything floats. Hyprland renders tiled windows in a pass below floating
--- ones, so a tiled window can never be raised above a floating neighbour — the
--- switcher would move focus to it correctly and still leave it buried. With a
--- single z-order stack the raise-on-focus hook below always works. SUPER+V
--- still toggles an individual window back to tiled.
-hl.window_rule({
-    name  = "float-by-default",
-    match = { class = ".*" },
-    float = true,
-})
+-- Workspaces listed here tile; every other workspace floats.
+--
+-- Floating is the default because Hyprland renders tiled windows in a pass
+-- below floating ones, so a tiled window can never be raised above a floating
+-- neighbour — the switcher moves focus to it correctly and still leaves it
+-- buried. That only bites when the two are *mixed*, so a workspace that tiles
+-- entirely is fine; one with a couple of floating windows over a tiled layout
+-- is not. Keep this all-or-nothing per workspace.
+--
+-- Empty means everything floats, which is the behaviour this replaces.
+local TILING_WORKSPACES = {}
+
+local function tiles(id)
+    for _, ws in ipairs(TILING_WORKSPACES) do
+        if ws == id then return true end
+    end
+    return false
+end
+
+-- One rule per floating workspace rather than a single catch-all, because a
+-- window rule can match a workspace but cannot exclude one.
+for ws = 1, 10 do
+    if not tiles(ws) then
+        hl.window_rule({
+            name  = "float-by-default-" .. ws,
+            match = { class = ".*", workspace = tostring(ws) },
+            float = true,
+        })
+    end
+end
+
+-- Flip the current workspace between tiled and floating, for the windows
+-- already on it. This is a one-off: new windows still follow
+-- TILING_WORKSPACES above, so make a change permanent by editing that list.
+hl.bind(mainMod .. " + SHIFT + F", function()
+    local ws = hl.get_active_workspace()
+    if not ws then return end
+
+    local wins = hl.get_workspace_windows(ws.id)
+    if #wins == 0 then return end
+
+    -- If anything is still floating, tile the lot; only once everything is
+    -- tiled does the bind float them again. Toggling each window individually
+    -- would just invert a mixed workspace into a differently mixed one.
+    local any_floating = false
+    for _, w in ipairs(wins) do
+        if w.floating then
+            any_floating = true
+            break
+        end
+    end
+
+    local action = any_floating and "disable" or "enable"
+    for _, w in ipairs(wins) do
+        hl.dispatch(hl.dsp.window.float({
+            action = action,
+            window = "address:" .. w.address,
+        }))
+    end
+end)
 
 hl.window_rule({
     name  = "float-file-dialogs",
