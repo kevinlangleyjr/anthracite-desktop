@@ -132,6 +132,14 @@ hl.config({
 ---------------
 
 hl.config({
+    cursor = {
+        -- Hyprland warps the pointer to the centre of a window when focus moves
+        -- by dispatcher rather than by click, so clicking a dock icon or
+        -- committing the Alt-Tab switcher would throw the cursor across the
+        -- screen. macOS never moves the pointer on its own.
+        no_warps = true,
+    },
+
     input = {
         kb_layout = "us",
 
