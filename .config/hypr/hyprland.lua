@@ -245,6 +245,12 @@ hl.bind(mainMod .. " + F", function()
     place(win, work_area(win.monitor))
 end)
 
+-- Note for anything driving Hyprland from a script: `hyprctl dispatch` wraps
+-- its payload as hl.dispatch(...) and silently does nothing for some
+-- dispatchers -- focusing a workspace among them, which reports ok and does not
+-- move. `hyprctl eval 'hl.dispatch(hl.dsp.focus({ workspace = 2 }))'` works.
+-- `hyprctl keyword` does not work against the Lua parser at all.
+
 -- Alt+Tab window switching, drawn by the AGS "switcher" overlay. AGS owns the
 -- list and the selection; these binds only nudge it. Nothing is focused until
 -- Alt comes back up, so the list can't reorder underneath the walk — which is
@@ -289,7 +295,12 @@ hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" 
 hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }))
 hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
 
--- Resize windows with mainMod + CTRL + arrows (split ratio tiled, size floating)
+-- Resize with mainMod + CTRL + arrows. On a tiled workspace this is how you
+-- give one window more room: the active window grows by the step and its
+-- neighbour shrinks by the same amount. The dwindle `splitratio` dispatcher
+-- looks like the more natural tool and is accepted by hl.dsp.layout, but it is
+-- a no-op in 0.56 — measured against two tiled windows, it left both at
+-- exactly their previous size.
 hl.bind(mainMod .. " + CTRL + right", hl.dsp.window.resize({ x =  40, y =   0, relative = true }), { repeating = true })
 hl.bind(mainMod .. " + CTRL + left",  hl.dsp.window.resize({ x = -40, y =   0, relative = true }), { repeating = true })
 hl.bind(mainMod .. " + CTRL + down",  hl.dsp.window.resize({ x =   0, y =  40, relative = true }), { repeating = true })
@@ -381,6 +392,11 @@ hl.window_rule({
 -- is not. Keep this all-or-nothing per workspace.
 --
 -- Empty means everything floats, which is the behaviour this replaces.
+--
+-- Editing this list is retroactive, and only in one direction. Adding a
+-- workspace and reloading tiles the windows already open on it; removing it
+-- again does *not* float them back, so recover with SUPER+SHIFT+F below. A
+-- plain reload with the list unchanged is safe and preserves float state.
 local TILING_WORKSPACES = {}
 
 local function tiles(id)
