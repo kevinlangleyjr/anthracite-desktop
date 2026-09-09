@@ -106,7 +106,8 @@ fi
 
 echo
 echo "System files"
-for rel in "greetd/config.toml" "pam.d/greetd" "pam.d/polkit-1"; do
+for rel in "greetd/config.toml" "pam.d/greetd" "pam.d/polkit-1" \
+	"udev/rules.d/50-fingerprint-no-autosuspend.rules"; do
 	repo_file="$REPO_DIR/etc/$rel"
 	live_file="/etc/$rel"
 	if [[ ! -r "$live_file" ]]; then

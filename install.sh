@@ -38,6 +38,7 @@ SYSTEM_FILES=(
 	"greetd/config.toml"
 	"pam.d/greetd"
 	"pam.d/polkit-1"
+	"udev/rules.d/50-fingerprint-no-autosuspend.rules"
 )
 
 # If a config dir already exists and is not already our symlink, move it aside

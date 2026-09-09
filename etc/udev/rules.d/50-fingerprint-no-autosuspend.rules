@@ -1,0 +1,15 @@
+# Keep the fingerprint reader powered.
+#
+# The Synaptics sensor (06cb:00fc) autosuspends after two seconds idle and does
+# not come back reliably: it drops off the USB bus entirely, and fprintd then
+# fails with "USB error ... No such device (it may have been disconnected)".
+#
+# The visible symptom is that hyprlock shows no fingerprint prompt at all.
+# hyprlock renders $FPRINTPROMPT only once it has claimed a device, so a
+# suspended reader produces a bare "Enter password" rather than an error —
+# which reads as fingerprint unlock not being configured, when it is.
+#
+# Polkit's fingerprint auth (see etc/pam.d/polkit-1) depends on the same device
+# and fails the same way.
+
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00fc", TEST=="power/control", ATTR{power/control}="on"
