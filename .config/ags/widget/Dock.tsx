@@ -373,6 +373,48 @@ export default function Dock() {
     animate()
   }
 
+  // The dock's own on-screen sliver is only as wide as the dock, so it only
+  // reveals from the middle of the screen. macOS reveals from anywhere along
+  // the bottom edge, which needs a surface spanning it. This is a separate
+  // window rather than a wider dock because widening the dock would either
+  // resize it under the pointer -- the hazard measure() exists to avoid -- or
+  // push measure()'s width pin past the screen.
+  //
+  // It shares the dock's layer and is created first, so where the two overlap
+  // the dock is on top and owns the pointer. Both call reveal(), so which one
+  // wins does not matter.
+  const trigger = (
+    <window
+      visible
+      name="dock-trigger"
+      namespace="dock-trigger"
+      anchor={
+        Astal.WindowAnchor.BOTTOM |
+        Astal.WindowAnchor.LEFT |
+        Astal.WindowAnchor.RIGHT
+      }
+      exclusivity={Astal.Exclusivity.IGNORE}
+      application={app}
+      // The request has to be on the window: a layer surface anchored to three
+      // edges takes a default height regardless of what its child asks for,
+      // and an over-tall strip would swallow clicks along the whole bottom of
+      // the screen rather than just its last few pixels.
+      heightRequest={TRIGGER}
+      $={(self: Astal.Window) => {
+        const motion = new Gtk.EventControllerMotion()
+        motion.connect("enter", () => reveal())
+        motion.connect("motion", () => reveal())
+        // Leaving upward into the dock fires before the dock's own enter, so
+        // the hide is queued and cancelled a frame later -- the same ordering
+        // the tooltip guard already relies on.
+        motion.connect("leave", () => conceal())
+        self.add_controller(motion)
+      }}
+    >
+      <box heightRequest={TRIGGER} />
+    </window>
+  ) as Astal.Window
+
   return (
     <window
       visible

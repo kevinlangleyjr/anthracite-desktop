@@ -3,6 +3,14 @@
 @use "./palette" as *;
 @use "./common" as *;
 
+// The full-width reveal strip. It exists only to receive pointer events along
+// the bottom edge, but it cannot be fully transparent: a surface that paints
+// nothing commits no buffer, and Hyprland then gives it neither a real size nor
+// pointer input. An alpha this low is imperceptible on any wallpaper.
+window#dock-trigger {
+  background-color: rgba(0, 0, 0, 0.004);
+}
+
 window#dock {
   background: transparent;
 
