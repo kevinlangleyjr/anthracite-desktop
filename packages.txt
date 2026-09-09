@@ -38,6 +38,13 @@ greetd-tuigreet
 # Nautilus, say) fails with no prompt at all. Started from hyprland.lua.
 polkit-kde-agent
 
+# A dialog tool, so applications that shell out for one can actually report
+# errors. Chromium and Electron apps look for zenity, kdialog or xmessage to
+# show profile problems and simply give up when none is installed: renaming
+# this machine invalidated Brave's singleton lock, and with no dialog tool the
+# only symptom was that clicking Brave did nothing at all.
+zenity
+
 # Secret Service provider (org.freedesktop.secrets). 1Password stores its
 # two-factor token through it and reports "unable to save your two-factor
 # token" when nothing implements the interface. Needs the pam_gnome_keyring
