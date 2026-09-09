@@ -277,6 +277,15 @@ The `ags` and `gnim` entries in `package.json` are `"*"` on purpose, and there i
 
 **A keybind does nothing.** This Hyprland parses dispatch payloads as **Lua**, so `hyprctl dispatch exit` resolves the bare word to nil and silently fails. Use `hyprctl dispatch hl.dsp.exit()`. The same applies to `hyprctl keyword`, which does not work against the Lua parser at all — use `hyprctl eval` instead.
 
+**No fingerprint prompt on the lock screen.** hyprlock renders
+`$FPRINTPROMPT` only once it has claimed a reader, so a reader it cannot claim
+produces a bare "Enter password" rather than an error — indistinguishable from
+fingerprint never having been set up. Check `journalctl -b -u fprintd`. `Device
+was already claimed` means a stale claim: a verification that was in flight
+when the reader dropped off the bus never released it, and `sudo systemctl
+restart fprintd` clears it. The udev rule in `etc/` stops the reader
+disappearing in the first place.
+
 **Screen never locks.** `pgrep hypridle` — started from `hyprland.lua`, fails silently if absent.
 
 Or just run `./doctor.sh`, which checks all of the above.
