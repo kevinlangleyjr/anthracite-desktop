@@ -25,6 +25,13 @@ hl.on("hyprland.start", function()
     -- just answers on D-Bus. Without this, anything asking for privileges
     -- (mounting a disk in Nautilus, say) fails with no prompt at all.
     hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
+    -- 1Password, minimised to the tray. It has to be started here: Hyprland
+    -- does not process XDG autostart, so the ~/.config/autostart entry it
+    -- installs never runs, and it only ever came up because it was launched by
+    -- hand. Its SSH agent signs git commits -- gpg.ssh.program points at
+    -- op-ssh-sign -- so without it running, every signed commit fails with
+    -- "could not connect to socket" after a reboot.
+    hl.exec_cmd("/opt/1Password/1password --silent")
     -- Clipboard history. Two watchers: wl-paste only reports one MIME class per
     -- --watch, so text and images each need their own.
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
