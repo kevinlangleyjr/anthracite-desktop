@@ -11,5 +11,11 @@
 #
 # Polkit's fingerprint auth (see etc/pam.d/polkit-1) depends on the same device
 # and fails the same way.
+#
+# The 99 prefix matters. udev applies rules in filename order, and systemd ships
+# /usr/lib/udev/rules.d/60-autosuspend.rules, which sets power/control back to
+# "auto" for USB devices. At 50 this rule ran first and was overwritten; the
+# only reason it appeared to work was that power/control had also been set by
+# hand. udevadm test names the winner in its "Written sysfs attributes" summary.
 
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00fc", TEST=="power/control", ATTR{power/control}="on"
