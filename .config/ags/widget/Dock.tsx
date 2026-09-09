@@ -47,6 +47,30 @@ const EASE = 0.055
 // frame callback rather than letting it tick on down an exponential tail.
 const SETTLED = 0.008
 
+// How much of the dock stays on screen while it is hidden. A layer surface that
+// is entirely off-screen receives no pointer events at all, so this strip is the
+// only thing that can notice the pointer arriving at the bottom edge and ask for
+// the dock back. It falls in the slab's bottom margin, so nothing shows.
+const TRIGGER = 3
+
+// Long enough that crossing the bottom edge on the way somewhere else does not
+// summon the dock, short enough that reaching for it deliberately does not read
+// as lag.
+const REVEAL_DELAY = 140
+
+// The dock waits a moment after the pointer leaves, so travelling across it on
+// the way to a window does not make it drop out from under the pointer.
+const HIDE_DELAY = 550
+
+// Time constant of the slide, in seconds. Slower than the magnification ease,
+// which is tuned to keep up with a pointer sweeping the row; the slab travels
+// its whole height in one go and at EASE that reads as a pop rather than a
+// slide.
+const SLIDE_EASE = 0.08
+
+// Half a pixel from the edge there is nothing left to travel.
+const SLID = 0.5
+
 type Item = {
   slot: Gtk.Widget
   icon: Gtk.Image
@@ -186,12 +210,16 @@ export default function Dock() {
   }
 
   const items: Item[] = []
-  let root: Gtk.Widget | null = null
+  let root: Astal.Window | null = null
   let reserve: Gtk.Widget | null = null
   let centers: number[] | null = null
   let tick = 0
   let last = 0
   let relax = 0
+  let shown = true
+  let offset = 0
+  let reveals = 0
+  let hides = 0
 
   // The widest the row can get, which is not the sum of six magnified icons: the
   // falloff only ever lifts the two or three under the pointer.
@@ -259,6 +287,27 @@ export default function Dock() {
         if (item.slot.widthRequest !== size) item.slot.widthRequest = size
       }
 
+      // The hidden position is a whole window below the edge, read every frame
+      // rather than cached: it is unknown until the window has been allocated,
+      // and the row's height is the one dimension nothing else here changes.
+      const goal = shown ? 0 : Math.max(root!.get_height() - TRIGGER, 0)
+      const travel = goal - offset
+      if (Math.abs(travel) < SLID) {
+        offset = goal
+      } else {
+        offset += travel * (1 - Math.exp(-dt / SLIDE_EASE))
+        moving = true
+      }
+
+      // Moving the surface rather than its contents is what keeps the surface
+      // exactly the size it was. Translating the slab down inside the window
+      // would grow the window's height request by the same amount, and a layer
+      // surface that resizes under the pointer is the problem measure() exists
+      // to avoid. It also leaves the measured centres alone: they are
+      // horizontal, and nothing here moves horizontally.
+      const push = Math.round(offset)
+      if (root!.get_margin_bottom() !== -push) root!.set_margin_bottom(-push)
+
       if (moving) return GLib.SOURCE_CONTINUE
       tick = 0
       return GLib.SOURCE_REMOVE
@@ -279,6 +328,37 @@ export default function Dock() {
       if (item.icon) item.icon.pixelSize = ICON_SIZE
       if (item.slot) item.slot.widthRequest = ICON_SIZE
     }
+  }
+
+  function slide(visible: boolean) {
+    shown = visible
+    animate()
+  }
+
+  function reveal() {
+    if (hides) {
+      GLib.source_remove(hides)
+      hides = 0
+    }
+    if (shown || reveals) return
+    reveals = GLib.timeout_add(GLib.PRIORITY_DEFAULT, REVEAL_DELAY, () => {
+      reveals = 0
+      slide(true)
+      return GLib.SOURCE_REMOVE
+    })
+  }
+
+  function conceal() {
+    if (reveals) {
+      GLib.source_remove(reveals)
+      reveals = 0
+    }
+    if (!shown || hides) return
+    hides = GLib.timeout_add(GLib.PRIORITY_DEFAULT, HIDE_DELAY, () => {
+      hides = 0
+      slide(false)
+      return GLib.SOURCE_REMOVE
+    })
   }
 
   function track(x: number | null) {
@@ -309,9 +389,16 @@ export default function Dock() {
         // covers the space the magnified icons rise into; an icon that lifted
         // out from under the pointer would otherwise drop, re-enter, and lift.
         const motion = new Gtk.EventControllerMotion()
-        motion.connect("enter", (_, x) => track(x))
-        motion.connect("motion", (_, x) => track(x))
+        motion.connect("enter", (_, x) => {
+          reveal()
+          track(x)
+        })
+        motion.connect("motion", (_, x) => {
+          reveal()
+          track(x)
+        })
         motion.connect("leave", () => {
+          conceal()
           // A popup mapping under the pointer — the tooltip — arrives as a
           // leave and an enter in the same frame. Relaxing the moment the leave
           // lands would drop the whole row a quarter of the way to rest and
@@ -324,6 +411,14 @@ export default function Dock() {
           })
         })
         self.add_controller(motion)
+
+        // The hidden position is measured off the window's own height, which is
+        // zero until it has been mapped and allocated, so the first hide cannot
+        // run from here. The wait doubles as a glimpse of the dock at login.
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 700, () => {
+          conceal()
+          return GLib.SOURCE_REMOVE
+        })
       }}
     >
       <box $={(self: Gtk.Box) => (reserve = self)}>
