@@ -14,6 +14,7 @@ import AstalHyprland from "gi://AstalHyprland"
 import AstalNotifd from "gi://AstalNotifd"
 import { For, With, createBinding, onCleanup } from "ags"
 import { createPoll } from "ags/time"
+import { execAsync } from "ags/process"
 import SystemStats from "./SystemStats"
 import Tailscale from "./Tailscale"
 
@@ -249,6 +250,18 @@ function SystemButton() {
       class="panel-button quicksettings status-item"
       onClicked={() => app.toggle_window("quicksettings")}
     >
+      {/* Right-click opens NetworkManager's full connection editor (VPNs,
+          static IPs, 802.1X...) that the quick settings Wi-Fi toggle can't
+          reach. Gtk.Button only claims the primary button, so this gesture
+          coexists with onClicked. */}
+      <Gtk.GestureClick
+        button={Gdk.BUTTON_SECONDARY}
+        onPressed={() =>
+          void execAsync("nm-connection-editor").catch((e) =>
+            console.error("nm-connection-editor failed:", e),
+          )
+        }
+      />
       <box spacing={8}>
         <With value={wifi}>
           {(w) => w && <image iconName={createBinding(w, "iconName")} />}
