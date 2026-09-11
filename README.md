@@ -142,19 +142,49 @@ Then set your monitors in `.config/hypr/local.lua` and reboot into the session.
 
 ## System files
 
-Three files outside `$HOME` are part of this setup. Two are modified package files; one is owned by no package at all.
+A handful of files outside `$HOME` are part of this setup. Most are modified package files; one is owned by no package at all.
 
 | Tracked copy             | Why it matters                                                                                            |
 | ------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `etc/greetd/config.toml` | The `tuigreet --cmd start-hyprland` line. This is how the session launches at all.                          |
 | `etc/pam.d/greetd`       | The two `pam_gnome_keyring` lines. Without them the keyring never unlocks and the Secret Service is dead.   |
 | `etc/pam.d/polkit-1`     | Owned by **no package**. Puts `pam_fprintd.so` ahead of the stack for fingerprint auth on privilege prompts. |
+| `etc/mkinitcpio.d/linux.preset` | Points the UKI's `--splash` at the Anthracite logo instead of Arch's.                                  |
+| `etc/anthracite/splash.bmp`     | The logo itself, as the 24-bit BMP `systemd-stub` can draw.                                            |
 
 ```sh
 ./install.sh --system     # sudo; backs up each file as <name>.bak-<timestamp>
 ```
 
 Overwriting `/etc/pam.d/*` on a routine re-run is how you lock yourself out of a machine, hence the flag.
+
+### Boot splash
+
+This machine boots a unified kernel image from `systemd-boot`, and `systemd-stub`
+draws whatever BMP was baked in with `--splash` while the kernel comes up. Stock
+Arch bakes in `/usr/share/systemd/bootctl/splash-arch.bmp` — the Arch wordmark.
+`etc/mkinitcpio.d/linux.preset` swaps that for `etc/anthracite/splash.bmp`, the
+same logo as `docs/icon.png` flattened onto black.
+
+The image lives inside the UKI, so editing either file changes nothing until the
+image is rebuilt — `./install.sh --system` does that for you, or by hand:
+
+```sh
+sudo mkinitcpio -P
+```
+
+To regenerate the BMP from a different source image (`systemd-stub` wants an
+uncompressed BMP, and it centres the image rather than scaling it):
+
+```sh
+ffmpeg -i docs/icon.png \
+	-vf "color=c=black:s=512x512[bg];[bg][0]overlay=format=auto,format=bgr24" \
+	-frames:v 1 etc/anthracite/splash.bmp
+```
+
+`linux.preset` belongs to the `linux` package, so a kernel upgrade drops a
+`.pacnew` beside it rather than overwriting it — but check after one, because a
+merged-in `.pacnew` takes the splash line with it.
 
 Everything else outside `$HOME` is stock: `/etc/pam.d/hyprlock`, the `wayland-sessions` desktop files, `/etc/environment`, `/etc/security/*`. `/etc/udev/rules.d/` is empty and needs nothing — this `brightnessctl` writes brightness through logind's D-Bus `SetBrightness`, not sysfs.
 

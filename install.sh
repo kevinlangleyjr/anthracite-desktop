@@ -39,6 +39,8 @@ SYSTEM_FILES=(
 	"pam.d/greetd"
 	"pam.d/polkit-1"
 	"udev/rules.d/99-fingerprint-no-autosuspend.rules"
+	"mkinitcpio.d/linux.preset"
+	"anthracite/splash.bmp"
 )
 
 # If a config dir already exists and is not already our symlink, move it aside
@@ -228,6 +230,7 @@ done
 
 if [[ "$APPLY_SYSTEM" == "yes" ]]; then
 	stamp=$(date +%Y%m%d%H%M%S)
+	rebuild_uki=no
 	for rel in "${SYSTEM_FILES[@]}"; do
 		repo_file="$REPO_DIR/etc/$rel"
 		live_file="/etc/$rel"
@@ -241,7 +244,16 @@ if [[ "$APPLY_SYSTEM" == "yes" ]]; then
 		fi
 		sudo install -m 644 -o root -g root "$repo_file" "$live_file"
 		echo "install: wrote /etc/$rel" >&2
+		case "$rel" in
+			mkinitcpio.d/* | anthracite/splash.bmp) rebuild_uki=yes ;;
+		esac
 	done
+	# The splash is baked into the unified kernel image, so a changed preset or
+	# a changed image only reaches the screen after the UKI is rebuilt.
+	if [[ "$rebuild_uki" == "yes" ]]; then
+		echo "install: rebuilding the unified kernel image" >&2
+		sudo mkinitcpio -P
+	fi
 elif ((system_drift)); then
 	echo "install: $system_drift system file(s) differ — re-run with --system to apply" >&2
 fi
