@@ -31,15 +31,23 @@ function ToggleRow({
   state,
   detail,
   onToggle,
+  onSecondary,
 }: {
   icon: any
   label: string
   state: any
   detail?: any
   onToggle: () => void
+  // Right-click. Gtk.Button only claims the primary button, so a secondary
+  // GestureClick on the same widget fires without disturbing onClicked.
+  onSecondary?: () => void
 }) {
   return (
     <button class="cc-row" vexpand onClicked={onToggle}>
+      <Gtk.GestureClick
+        button={Gdk.BUTTON_SECONDARY}
+        onPressed={() => onSecondary?.()}
+      />
       <box spacing={10}>
         <box class={state((on: boolean) => (on ? "cc-circle on" : "cc-circle"))}>
           <image iconName={icon} />
@@ -128,6 +136,13 @@ function Connectivity() {
             `bluetoothctl power ${bluetooth.isPowered ? "off" : "on"}`,
           ).catch(console.error)
         }
+        // Right-click opens blueman-manager for pairing, trust and audio
+        // profiles -- the toggle itself only powers the adapter.
+        onSecondary={() => {
+          const win = app.get_window("quicksettings")
+          if (win) win.visible = false
+          void execAsync("blueman-manager").catch(console.error)
+        }}
       />
     </box>
   )
