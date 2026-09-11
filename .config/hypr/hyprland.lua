@@ -36,6 +36,10 @@ hl.on("hyprland.start", function()
     -- --watch, so text and images each need their own.
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
+    -- Bluetooth tray icon + pairing UI. The AGS quick settings toggle only
+    -- powers the adapter on and off; blueman-applet shows up in the Bar's
+    -- tray and opens blueman-manager for pairing, trust and audio profiles.
+    hl.exec_cmd("blueman-applet")
 end)
 
 

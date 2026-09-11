@@ -64,6 +64,10 @@ network-manager-applet
 # entirely until this list was written, so the toggle silently did nothing.
 bluez
 bluez-utils
+# blueman gives Bluetooth a real settings UI (pairing, trust, audio
+# profiles). blueman-applet is autostarted from hyprland.lua and sits in
+# the bar's tray; the quick settings toggle only powers the adapter.
+blueman
 
 # --- Audio ----------------------------------------------------------------
 # wireplumber supplies wpctl, which the volume and mic keybinds call directly.
